@@ -57,10 +57,10 @@ public class Server
     ConcurrentQueue<Tuple<int, string>> ContentQueue = new ConcurrentQueue<Tuple<int, string>>();
     ConcurrentQueue<Tuple<int, string>> SendQueue = new ConcurrentQueue<Tuple<int, string>>();
 
-    public ConcurrentDictionary<int, Tuple<int, string>> RequireResponse = new ConcurrentDictionary<int, Tuple<int, string>>();
+    ConcurrentDictionary<int, Tuple<int, string>> RequireResponse = new ConcurrentDictionary<int, Tuple<int, string>>();
     ConcurrentQueue<int> RequiredResponseQueue = new ConcurrentQueue<int>();
-    public int RID = 1;
-    public CircularArray<int> RecievedRIDs = new CircularArray<int>(50);
+    int RID = 1;
+    CircularArray<int> RecievedRIDs = new CircularArray<int>(50);
 
     Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     

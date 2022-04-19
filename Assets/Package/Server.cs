@@ -31,7 +31,7 @@ public static class ServerLogger
     }
 }
 
-public class Server
+public class Server : ServerClientParent
 {
     public static bool IsRunning = false;
 
@@ -64,20 +64,26 @@ public class Server
 
     Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     
-    List<PacketHandlerInterface> DefaultPacketHandlerHierachy = new List<PacketHandlerInterface> {new DefaultServerPacketHandler()};
-    List<PacketHandlerInterface> PacketHandlerHierachy = new List<PacketHandlerInterface>();
+    PacketHandlerHierachy packetHandlerHierachy;
 
     // Singleton setup
-    private Server() {}
-    private static Server instance = new Server();
+    private Server() 
+    {
+        packetHandlerHierachy = new PacketHandlerHierachy(this);
+    }
+    private static Server instance = null;
     public static Server getInstance()
     {
+        if (instance is null){
+            instance = new Server();
+        }
+
         return instance;
     }
 
     public void Start(){
-       //AcceptClientThread = new Thread(AcceptClients);
-       //AcceptClientThread.Start();
+       // AcceptClientThread = new Thread(AcceptClients);
+       // AcceptClientThread.Start();
        // RecieveThread = new Thread(RecieveLoop);
        // RecieveThread.Start();
        // SendThread = new Thread(SendLoop);
@@ -168,7 +174,7 @@ public class Server
         }
     }
 
-    /*
+    
     public void SendMessage(int ID, string message, bool require_response){
         SendQueue.Enqueue(new Tuple<int, string>(ID, message));
 
@@ -187,7 +193,7 @@ public class Server
                     Tuple<int, string> to_send;
                     if (SendQueue.TryDequeue(out to_send)){
                         Debug.Log("SERVER: Sent " + to_send.Item2);
-                        Players[to_send.Item1].Handler.Send(PacketTools.Encode(to_send.Item2));
+                        Players[to_send.Item1].Handler.Send(to_send.Item2);
                     }
                 }
                 else if (!RequiredResponseQueue.IsEmpty){
@@ -206,7 +212,7 @@ public class Server
             }
         }
         catch (Exception e){
-            networkManager.FatalException(e.ToString());
+            Debug.LogError(e);
         }
     }
 
@@ -261,63 +267,20 @@ public class Server
         try{
             while (true)
             {
-                // Update current game every x ms
-                if (CurrentGame != null){
-                    if (CurrentGame.MsBetweenUpdates != -1){
-                        if (!CurrentGameStopwatch.IsRunning){
-                            CurrentGameStopwatch.Start();
-                        }
-
-                        else if (CurrentGameStopwatch.ElapsedMilliseconds > CurrentGame.MsBetweenUpdates)
-                        {
-                            CurrentGameStopwatch.Restart();
-                            CurrentGame.Update();
-                        }
-                    }
-                }
-
                 if (ContentQueue.IsEmpty){Thread.Sleep(2); continue;} // Nothing recieved
 
                 Tuple<int, string> content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
-                int rid = PacketTools.RequireResponse(content.Item2);
-
-                // Confirm recieved
-                // if (rid != 0) { 
-                //     SendMessage(content.Item1, ResponseConfirmPacket.Build(rid), false); Debug.Log("CLIENT: CONFIRMED MESSAGE"); 
-                //     if (RecievedRIDs.Contains(rid) != -1){
-                //         continue; // Already recieved this message
-                //     }
-                //     else{
-                //         RecievedRIDs.Add(rid);
-                //     }
-                // }
-
-                string UID = "1"; //PacketTools.PacketToUID(content.Item2);
-
-                // Try to get current game to handle packet
-                // if (CurrentGame != null){
-                //     if (CurrentGame.HandlePacket(UID, content.Item2, content.Item1)){
-                //         continue;
-                //     }
-                // }
-
-                // Handle packet
-                if (PacketActions.ContainsKey(UID)){
-                    PacketActions[UID](content.Item2, this, content.Item1);
-                }
-                else{
-                    Debug.LogError("SERVER: Unhandled packet: " + content.Item2);
-                }
+                packetHandlerHierachy.HandlePacket(content.Item2);
 
             }
         }
         catch (Exception e){
-            //networkManager.FatalException(e.ToString());
+            Debug.LogError(e);
         }
     }
-    */
+    
     ~Server(){Stop();}
     public void Stop(){
         try{Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Text;
 
 public class PacketDictionary: Dictionary<string, string>{
 
@@ -38,6 +39,8 @@ public class PacketMissingAttributeException : Exception
 
 public static class PacketBuilder
 {
+    public static Encoding encoder = new UTF8Encoding();
+
     public static string RemoveEOF(string data){
         return data.Substring(0, data.Length - 5);
     }
@@ -63,6 +66,10 @@ public static class PacketBuilder
         }
 
         return UID + "#" + RID + dict_string;
+    }
+
+    public static byte[] ByteEncode(string input){
+        return encoder.GetBytes(input);
     }
 
     public static Packet Decode(string data){

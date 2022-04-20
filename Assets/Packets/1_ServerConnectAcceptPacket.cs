@@ -1,20 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class ServerConnectAcceptPacket {
-    int UID;
-    int RID;
-    int GivenUID;
+    public const int UID = 1;
+    public int RID;
+    public int GivenUID;
     public ServerConnectAcceptPacket(Packet packet){
-        UID = packet.UID;
         RID = packet.RID;
-        GivenUID = int.Parse(packet.contents["GivenUID"]);
+        GivenUID = BitConverter.ToInt32(packet.contents[0]);
     }
 
-    public static string Build(int _UID, int _RID, int _GivenUID) {
-            Dictionary<string, string> contents = new Dictionary<string, string>();
-            contents["GivenUID"] = _GivenUID.ToString();
-            return PacketBuilder.Build(_UID, contents, _RID);
+    public static byte[] Build(int _RID, int _GivenUID) {
+            List<byte[]> contents = new List<byte[]>();
+            contents.Add(BitConverter.GetBytes(_GivenUID));
+            return PacketBuilder.Build(UID, contents, _RID);
     }
 }

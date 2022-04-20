@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 
-public class ServerClient
+public abstract class ServerClient
 {
     public Socket Handler;
 
@@ -18,6 +18,8 @@ public class ServerClient
     public ServerClient(Socket handler){
         Handler = handler;
     }
+
+    public abstract void HandleRID(int RID);
 
     public void Reset(){
         buffer = new byte[1024];

@@ -1,20 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class ClientConnectRequestPacket {
-    int UID;
-    int RID;
-    string Name;
+    public const int UID = 0;
+    public int RID;
+    public string Name;
+    public string Version;
     public ClientConnectRequestPacket(Packet packet){
-        UID = packet.UID;
         RID = packet.RID;
-        Name = packet.contents["Name"];
+        Name = ASCIIEncoding.ASCII.GetString(packet.contents[0]);
+        Version = ASCIIEncoding.ASCII.GetString(packet.contents[1]);
     }
 
-    public static string Build(int _UID, int _RID, string _Name) {
-            Dictionary<string, string> contents = new Dictionary<string, string>();
-            contents["Name"] = _Name;
-            return PacketBuilder.Build(_UID, contents, _RID);
+    public static byte[] Build(int _RID, string _Name, string _Version) {
+            List<byte[]> contents = new List<byte[]>();
+            contents.Add(ASCIIEncoding.ASCII.GetBytes(_Name));
+            contents.Add(ASCIIEncoding.ASCII.GetBytes(_Version));
+            return PacketBuilder.Build(UID, contents, _RID);
     }
 }

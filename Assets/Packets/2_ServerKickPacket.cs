@@ -1,20 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class ServerKickPacket {
-    int UID;
-    int RID;
-    string Reason;
+    public const int UID = 2;
+    public int RID;
+    public string Reason;
     public ServerKickPacket(Packet packet){
-        UID = packet.UID;
         RID = packet.RID;
-        Reason = packet.contents["Reason"];
+        Reason = ASCIIEncoding.ASCII.GetString(packet.contents[0]);
     }
 
-    public static string Build(int _UID, int _RID, string _Reason) {
-            Dictionary<string, string> contents = new Dictionary<string, string>();
-            contents["Reason"] = _Reason;
-            return PacketBuilder.Build(_UID, contents, _RID);
+    public static byte[] Build(int _RID, string _Reason) {
+            List<byte[]> contents = new List<byte[]>();
+            contents.Add(ASCIIEncoding.ASCII.GetBytes(_Reason));
+            return PacketBuilder.Build(UID, contents, _RID);
     }
 }

@@ -18,19 +18,21 @@ public class PacketHandlerHierachy
         ServerClient = serverClient;
     }
 
-    public bool HandlePacket(string data){
+    public bool HandlePacket(byte[] data){
         Packet packet = PacketBuilder.Decode(data);
+
+
 
         foreach (PacketHandlerParent packetHandler in ServerClient.DefaultHierachy){
             if (packetHandler.UIDtoAction.ContainsKey(packet.UID)){
-                packetHandler.UIDtoAction[packet.UID](packet.contents);
+                packetHandler.UIDtoAction[packet.UID](packet);
                 return true;
             }
         }
 
         foreach (PacketHandlerParent packetHandler in Hierachy){
             if (packetHandler.UIDtoAction.ContainsKey(packet.UID)){
-                packetHandler.UIDtoAction[packet.UID](packet.contents);
+                packetHandler.UIDtoAction[packet.UID](packet);
                 return true;
             }
         }

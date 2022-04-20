@@ -5,15 +5,15 @@ using UnityEngine;
 using System.Text;
 
 public class PacketDictionary: Dictionary<string, string>{
-
+    
 }
 
 public struct Packet{
     public int UID;
     public int RID;
-    public Dictionary<string, string> contents;
+    public List<byte[]> contents;
 
-    public Packet(int _UID, int _RID, Dictionary<string, string> _contents){
+    public Packet(int _UID, int _RID, List<byte[]> _contents){
         UID = _UID;
         RID = _RID;
         contents = _contents;
@@ -37,49 +37,69 @@ public class PacketMissingAttributeException : Exception
     }
 }
 
+//UIDLEN 16 bit & RIDLEN 24 bit
+//UID, RID, Data
 public static class PacketBuilder
 {
-    public static Encoding encoder = new UTF8Encoding();
+    private static Encoding encoder = new UTF8Encoding();
 
+    public const int PacketLenLen = 4;
+    public const int UIDLen = 4;
+    public const int RIDLen = 4;
+    public const int DataLenLen = 2;
+
+    /*
     public static string RemoveEOF(string data){
         return data.Substring(0, data.Length - 5);
     }
-    public static string Build(int UID, Dictionary<string, string> contents = null, int RID = 0)
-    {
-        return Build(UID.ToString(), contents, RID.ToString());
+    */
+
+    public static int GetPacketLength(byte[] bytes){
+        return BitConverter.ToInt32(ArrayExtentions<byte>.Slice(bytes, 0, PacketLenLen), 0);
     }
 
-    public static string Build(string UID, Dictionary<string, string> contents = null, string RID = "0")
-    {   
-        # if UNITY_EDITOR
-        foreach (string key in contents.Keys){
-            if (key.Contains("#") | contents[key].Contains("#"))
-            {
-                Debug.LogError("PACKET CONTAINS #");
-            }
-        }
-        # endif
+    public static byte[] Build(int UID, List<byte[]> contents, int RID = 0)
+    {
+        byte[] buffer = new byte[1024];
+        int cursor = PacketLenLen;
+        ArrayExtentions<byte>.Merge(buffer, BitConverter.GetBytes(UID), cursor);
+        cursor = 4;
+        ArrayExtentions<byte>.Merge(buffer, BitConverter.GetBytes(RID), cursor);
+        cursor = 8;
 
-        string dict_string = "";
-        foreach (string key in contents.Keys){
-            dict_string += "#" + key + "#" + contents[key];
+        foreach (byte[] c in contents){
+            ArrayExtentions<byte>.Merge(buffer, BitConverter.GetBytes(c.Length), cursor);
+            cursor += 4;
+            ArrayExtentions<byte>.Merge(buffer, c, cursor);
+            cursor += c.Length;
         }
 
-        return UID + "#" + RID + dict_string;
+        // Add packet length
+        ArrayExtentions<byte>.Merge(buffer, BitConverter.GetBytes(cursor-4), 0);
+
+        return ArrayExtentions<byte>.Slice(buffer, 0, cursor);
     }
 
     public static byte[] ByteEncode(string input){
         return encoder.GetBytes(input);
     }
 
-    public static Packet Decode(string data){
-        string[] split = data.Split('#');
-        Dictionary<string, string> content = new Dictionary<string, string>();
+    public static Packet Decode(byte[] data){
+        int cursor = 0;
+        int UID = BitConverter.ToInt32(ArrayExtentions<byte>.Slice(data, cursor, cursor + UIDLen));
+        cursor += UIDLen;
+        int RID = BitConverter.ToInt32(ArrayExtentions<byte>.Slice(data, cursor, cursor + RIDLen));
+        cursor += RIDLen;
 
-        for (int i = 2; i < split.Length; i+=2){
-            content[split[i]] = split[i+1];
+        List<byte[]> contents = new List<byte[]>();
+        while (cursor < data.Length){
+            int data_len = BitConverter.ToInt32(ArrayExtentions<byte>.Slice(data, cursor, cursor + DataLenLen));
+            cursor += DataLenLen;
+            byte[] content = ArrayExtentions<byte>.Slice(data, cursor, cursor + data_len);
+            cursor += data_len;
+            contents.Add(content);
         }
 
-        return new Packet(int.Parse(split[0]), int.Parse(split[1]), content);
+        return new Packet(UID, RID, contents);
     }
 }

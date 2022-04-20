@@ -54,17 +54,19 @@ public class Server : ServerClientParent
 
     public int UsersConnected {get {return Players.Count;}}
 
-    ConcurrentQueue<Tuple<int, string>> ContentQueue = new ConcurrentQueue<Tuple<int, string>>();
-    ConcurrentQueue<Tuple<int, string>> SendQueue = new ConcurrentQueue<Tuple<int, string>>();
+    ConcurrentQueue<Tuple<int, byte[]>> ContentQueue = new ConcurrentQueue<Tuple<int, byte[]>>();
+    ConcurrentQueue<Tuple<int, byte[]>> SendQueue = new ConcurrentQueue<Tuple<int, byte[]>>();
 
-    ConcurrentDictionary<int, Tuple<int, string>> RequireResponse = new ConcurrentDictionary<int, Tuple<int, string>>();
+    ConcurrentDictionary<int, Tuple<int, byte[]>> RequireResponse = new ConcurrentDictionary<int, Tuple<int, byte[]>>();
     ConcurrentQueue<int> RequiredResponseQueue = new ConcurrentQueue<int>();
     int RID = 1;
     CircularArray<int> RecievedRIDs = new CircularArray<int>(50);
 
-    Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
+    // Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     
     PacketHandlerHierachy packetHandlerHierachy;
+
+    bool AcceptingClients = false;
 
     // Singleton setup
     private Server() 
@@ -108,55 +110,54 @@ public class Server : ServerClientParent
 
             listener.Listen(100);
 
-            while (UsersConnected < 2)
+            while (true)
             {
                 ServerLogger.AC("SERVER: Waiting for a connection...");
                 Socket Handler = listener.Accept();
 
                 // Incoming data from the client.    
-                string data = null;
-                byte[] bytes = null;
+                byte[] rec_bytes = new byte[1024];
+                int total_rec = 0;
 
-                while (true)
-                {
-                    bytes = new byte[1024];
-                    int bytesRec = Handler.Receive(bytes);
-                    data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    if (data.IndexOf("<EOF>") > -1)
-                    {
-                        break;
-                    }
+                while (total_rec < 4) {
+                    byte[] partial_bytes = new byte[1024];
+                    int bytesRec = Handler.Receive(partial_bytes);
+
+                    total_rec += bytesRec;
+                    ArrayExtentions<byte>.Merge(rec_bytes, ArrayExtentions<byte>.Slice(partial_bytes, 0, bytesRec), total_rec);
                 }
 
-                ServerLogger.AC("SERVER: Text received : {0}" + data);
+                int packet_len = PacketBuilder.GetPacketLength(rec_bytes);
 
-                Packet initPacket = PacketBuilder.Decode(PacketBuilder.RemoveEOF(data));
+                while (total_rec < packet_len + PacketBuilder.PacketLenLen){
+                    byte[] partial_bytes = new byte[1024];
+                    int bytesRec = Handler.Receive(partial_bytes);
+
+                    total_rec += bytesRec;
+                    ArrayExtentions<byte>.Merge(rec_bytes, ArrayExtentions<byte>.Slice(partial_bytes, 0, bytesRec), total_rec);
+                }
+
+                ClientConnectRequestPacket initPacket = new ClientConnectRequestPacket(PacketBuilder.Decode(rec_bytes));
 
                 // Version mismatch
-                if (initPacket.contents["version"] != NetworkSettings.VERSION){
-                    Handler.Send(PacketTools.Encode(KickPacketClient.Build("Wrong Version:\nServer: " + networkManager.version + "   Client (You): " + initPacket.version, 0)));
+                if (initPacket.Version != NetworkSettings.VERSION){
+                    Handler.Send(ServerKickPacket.Build(0, "Wrong Version:\nServer: " + NetworkSettings.VERSION.ToString() + "   Client (You): " + initPacket.Version.ToString()));
                     continue;
                 }
                 
-                int p = 0;
-                if (Players[0] != null){
-                    p++;
+                if (!AcceptingClients){
+                    Handler.Send(ServerKickPacket.Build(0, "Server not accepting clients at this time"));
+                    continue;
                 }
-                Players[p] = new ServerClient(Handler);
-                Players[p].name = initPacket.name;
-                Players[p].UID = p;
-                UsersConnected++;
 
-                if (Players[p].name != networkManager.Username) { networkManager.OpponentName = Players[p].name; }
+                // TODO: Add player join logic
                 
-                SendMessage(p, InitalPacketClient.Build(RID, p), true);
+                SendMessage(PlayerID, ServerConnectAcceptPacket.Build(RID, PlayerID), true);
 
-                currentMessage = "Player " + p.ToString() + " (" + initPacket.name + ")" + " connected";
-                Debug.Log(currentMessage);
+                ServerLogger.AC("Player " + PlayerID.ToString() + " (" + initPacket.Name + ")" + " connected");
 
-                Handler.BeginReceive(Players[p].buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), Players[p]);
+                Handler.BeginReceive(Players[PlayerID].buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), Players[p]);
             }
-            Debug.Log("SERVER: Both clients connected");
             // SendMessage(0, ScenesSwitchPacket.Build(1, RID), true);
             // SendMessage(1, ScenesSwitchPacket.Build(1, RID), true);
 
@@ -168,18 +169,16 @@ public class Server : ServerClientParent
         catch (ThreadAbortException){}
         catch (Exception e)
         {
-            Debug.Log("ERROR");
-            Debug.Log(e.ToString());
-            networkManager.QuitLobby(e.ToString());
+            Debug.LogError(e.ToString());
         }
     }
 
     
-    public void SendMessage(int ID, string message, bool require_response){
-        SendQueue.Enqueue(new Tuple<int, string>(ID, message));
+    public void SendMessage(int ID, byte[] message, bool require_response){
+        SendQueue.Enqueue(new Tuple<int, byte[]>(ID, message));
 
         if (require_response){
-            RequireResponse[RID] = new Tuple<int, string>(ID, message);
+            RequireResponse[RID] = new Tuple<int, byte[]>(ID, message);
             RequiredResponseQueue.Enqueue(RID);
             RID++;
         }
@@ -190,7 +189,7 @@ public class Server : ServerClientParent
         try{
             while (true){
                 if (!SendQueue.IsEmpty){
-                    Tuple<int, string> to_send;
+                    Tuple<int, byte[]> to_send;
                     if (SendQueue.TryDequeue(out to_send)){
                         Debug.Log("SERVER: Sent " + to_send.Item2);
                         Players[to_send.Item1].Handler.Send(to_send.Item2);
@@ -200,9 +199,9 @@ public class Server : ServerClientParent
                     int rid;
                     if (RequiredResponseQueue.TryDequeue(out rid)){
                         if (RequireResponse.ContainsKey(rid)){
-                            Tuple<int, string> to_send = RequireResponse[rid];
+                            Tuple<int, byte[]> to_send = RequireResponse[rid];
                             Debug.Log("SERVER: Sent " + to_send.Item2);
-                            Players[to_send.Item1].Handler.Send(PacketTools.Encode(to_send.Item2));
+                            Players[to_send.Item1].Handler.Send(to_send.Item2);
                             RequiredResponseQueue.Enqueue(rid);
                         }
                     }
@@ -216,6 +215,7 @@ public class Server : ServerClientParent
         }
     }
 
+    // TODO: Rewrite this with new methods
     private void ReadCallback(IAsyncResult ar)
     {
         String content = String.Empty;
@@ -241,7 +241,7 @@ public class Server : ServerClientParent
 
                     Debug.Log("SERVER: Recieved " + subcontent);
 
-                    ContentQueue.Enqueue(new Tuple<int, string>(CurrentPlayer.UID, subcontent));
+                    ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.UID, subcontent));
                 }
                 CurrentPlayer.Reset(); // Reset buffers
 
@@ -269,7 +269,7 @@ public class Server : ServerClientParent
             {
                 if (ContentQueue.IsEmpty){Thread.Sleep(2); continue;} // Nothing recieved
 
-                Tuple<int, string> content;
+                Tuple<int, byte[]> content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
                 packetHandlerHierachy.HandlePacket(content.Item2);

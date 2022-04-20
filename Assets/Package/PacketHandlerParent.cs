@@ -3,5 +3,5 @@ using System.Collections;
 using System.Collections.Generic;
 
 public abstract class PacketHandlerParent{
-    public abstract Dictionary<int, Action<Dictionary<string, string>>> UIDtoAction {get;}
+    public abstract Dictionary<int, Action<Packet>> UIDtoAction {get;}
 }

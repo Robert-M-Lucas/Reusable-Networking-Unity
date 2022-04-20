@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections;
 
 public static class ArrayExtentions<T>{
-    public static void Merge(T[] BigArr, T[] SmallArr, int index){
+    public static void Merge(T[] BigArr, T[] SmallArr, int index = 0){
         foreach (T item in SmallArr){
             BigArr[index] = item;
             index ++;

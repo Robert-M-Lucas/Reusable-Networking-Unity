@@ -55,7 +55,7 @@ public static class PacketBuilder
     */
 
     public static int GetPacketLength(byte[] bytes){
-        return BitConverter.ToInt32(ArrayExtentions<byte>.Slice(bytes, 0, PacketLenLen), 0);
+        return BitConverter.ToInt32(ArrayExtentions<byte>.Slice(bytes, 0, PacketLenLen), 0) + PacketLenLen;
     }
 
     public static byte[] Build(int UID, List<byte[]> contents, int RID = 0)
@@ -85,7 +85,7 @@ public static class PacketBuilder
     }
 
     public static Packet Decode(byte[] data){
-        int cursor = 0;
+        int cursor = 4;
         int UID = BitConverter.ToInt32(ArrayExtentions<byte>.Slice(data, cursor, cursor + UIDLen));
         cursor += UIDLen;
         int RID = BitConverter.ToInt32(ArrayExtentions<byte>.Slice(data, cursor, cursor + RIDLen));

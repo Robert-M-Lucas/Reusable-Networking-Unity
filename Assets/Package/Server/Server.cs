@@ -50,7 +50,7 @@ public class Server : ServerClientParent
     public static Action SendUpdateAction = () => { };
     # endregion
 
-    public List<ServerClient> Players = new List<ServerClient>();
+    public List<ServerPlayer> Players = new List<ServerPlayer>();
 
     public int UsersConnected {get {return Players.Count;}}
 
@@ -64,14 +64,16 @@ public class Server : ServerClientParent
 
     // Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     
-    PacketHandlerHierachy packetHandlerHierachy;
+    ServerHierachy serverHierachy;
 
     bool AcceptingClients = false;
+
+    int playerIDCounter = 0;
 
     // Singleton setup
     private Server() 
     {
-        packetHandlerHierachy = new PacketHandlerHierachy(this);
+        serverHierachy = new ServerHierachy(this);
     }
     private static Server instance = null;
     public static Server getInstance()
@@ -91,6 +93,21 @@ public class Server : ServerClientParent
        // SendThread = new Thread(SendLoop);
        // SendThread.Start();
        IsRunning = true;
+    }
+
+    ServerPlayer GetPlayer(int playerID){
+        foreach (ServerPlayer player in Players){
+            if (player.ID == playerID){
+                return player;
+            }
+        }
+        return null;
+    }
+
+    ServerPlayer AddPlayer(Socket handler){
+        Players.Add(new ServerPlayer(handler, playerIDCounter));
+        playerIDCounter++;
+        return Players[Players.Count-1];
     }
 
     // Accept client
@@ -129,7 +146,7 @@ public class Server : ServerClientParent
 
                 int packet_len = PacketBuilder.GetPacketLength(rec_bytes);
 
-                while (total_rec < packet_len + PacketBuilder.PacketLenLen){
+                while (total_rec < packet_len){
                     byte[] partial_bytes = new byte[1024];
                     int bytesRec = Handler.Receive(partial_bytes);
 
@@ -151,20 +168,18 @@ public class Server : ServerClientParent
                 }
 
                 // TODO: Add player join logic
+                ServerPlayer player = AddPlayer(Handler);
+
+                foreach (Action<ServerPlayer> action in serverHierachy.OnPlayerJoinActions){
+                    action(player);
+                }
                 
-                SendMessage(PlayerID, ServerConnectAcceptPacket.Build(RID, PlayerID), true);
+                SendMessage(player.ID, ServerConnectAcceptPacket.Build(RID, player.ID), true);
 
-                ServerLogger.AC("Player " + PlayerID.ToString() + " (" + initPacket.Name + ")" + " connected");
+                ServerLogger.AC("Player " + player.ID.ToString() + " (" + initPacket.Name + ")" + " connected");
 
-                Handler.BeginReceive(Players[PlayerID].buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), Players[p]);
+                Handler.BeginReceive(player.buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), player);
             }
-            // SendMessage(0, ScenesSwitchPacket.Build(1, RID), true);
-            // SendMessage(1, ScenesSwitchPacket.Build(1, RID), true);
-
-            // Send information about clients to eachother
-            SendMessage(0, OtherPlayerInfoPacketClient.Build(Players[1].name, RID), true);
-            SendMessage(1, OtherPlayerInfoPacketClient.Build(Players[0].name, RID), true);
-            
         }
         catch (ThreadAbortException){}
         catch (Exception e)
@@ -215,45 +230,51 @@ public class Server : ServerClientParent
         }
     }
 
-    // TODO: Rewrite this with new methods
     private void ReadCallback(IAsyncResult ar)
     {
         String content = String.Empty;
  
-        ServerClient CurrentPlayer = (ServerClient)ar.AsyncState;
+        ServerPlayer CurrentPlayer = (ServerPlayer) ar.AsyncState;
         Socket handler = CurrentPlayer.Handler;
 
         int bytesRead = handler.EndReceive(ar);
 
         if (bytesRead > 0)
         {
-            CurrentPlayer.sb.Append(Encoding.UTF8.GetString(
-                CurrentPlayer.buffer, 0, bytesRead));
+            ArrayExtentions<byte>.Merge(CurrentPlayer.long_buffer, CurrentPlayer.buffer, CurrentPlayer.long_buffer_size);
+            CurrentPlayer.long_buffer_size += bytesRead;
 
-            // Check for EOF
-            content = CurrentPlayer.sb.ToString();
-            if (content.IndexOf("<EOF>") > -1)
+            ReprocessBuffer:
+
+            if (CurrentPlayer.current_packet_length == -1 && CurrentPlayer.long_buffer_size >= PacketBuilder.PacketLenLen)
             {
+                CurrentPlayer.current_packet_length = PacketBuilder.GetPacketLength(CurrentPlayer.long_buffer);
+            }
 
-                foreach (string subcontent in content.Split(new[] { "<EOF>" }, StringSplitOptions.None))
-                {
-                    if (subcontent.Length == 0) { continue; }
-
-                    Debug.Log("SERVER: Recieved " + subcontent);
-
-                    ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.UID, subcontent));
+            if (CurrentPlayer.current_packet_length != -1 && CurrentPlayer.long_buffer_size >= CurrentPlayer.current_packet_length)
+            {
+                ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.ID, ArrayExtentions<byte>.Slice(CurrentPlayer.long_buffer, 0, CurrentPlayer.current_packet_length)));
+                byte[] new_buffer = new byte[1024];
+                ArrayExtentions<byte>.Merge(new_buffer, ArrayExtentions<byte>.Slice(CurrentPlayer.long_buffer, CurrentPlayer.current_packet_length, 1024), 0);
+                CurrentPlayer.long_buffer = new_buffer;
+                CurrentPlayer.long_buffer_size -= CurrentPlayer.current_packet_length;
+                CurrentPlayer.current_packet_length = -1;
+                if (CurrentPlayer.long_buffer_size > 0){
+                    goto ReprocessBuffer;
                 }
-                CurrentPlayer.Reset(); // Reset buffers
+            }
 
-                handler.BeginReceive(CurrentPlayer.buffer, 0, 1024, 0,
-                new AsyncCallback(ReadCallback), CurrentPlayer); // Listen again
-            }
-            else
-            {
-                // Not all data received. Get more.  
-                handler.BeginReceive(CurrentPlayer.buffer, 0, 1024, 0,
-                new AsyncCallback(ReadCallback), CurrentPlayer);
-            }
+            // ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.ID, subcontent));
+            // CurrentPlayer.Reset(); // Reset buffers
+// 
+            handler.BeginReceive(CurrentPlayer.buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), CurrentPlayer); // Listen again
+            // }
+            // else
+            // {
+            //     // Not all data received. Get more.  
+            //     handler.BeginReceive(CurrentPlayer.buffer, 0, 1024, 0,
+            //     new AsyncCallback(ReadCallback), CurrentPlayer);
+            // }
         }
         else
         {
@@ -272,7 +293,7 @@ public class Server : ServerClientParent
                 Tuple<int, byte[]> content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
-                packetHandlerHierachy.HandlePacket(content.Item2);
+                serverHierachy.HandlePacket(content.Item2);
 
             }
         }

@@ -1,5 +1,0 @@
-0\ClientConnectRequest\Name\string\Version\string
-1\ServerConnectAccept\GivenUID\int
-2\ServerKick\Reason\string
-3\ServerOtherClientInfo\ClientUID\int\ClientName\string
-100\CoordinateTest\X\double\Y\double\Z\double\Name\string

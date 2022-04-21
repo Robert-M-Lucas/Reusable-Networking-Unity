@@ -14,20 +14,20 @@ public static class ServerLogger
 {
     // Accept Client Thread
     public static void AC (string message){
-        Server.AcceptClientThreadInfo = message;
-        Server.AcceptClientUpdateAction();
+        Server.getInstance().AcceptClientThreadInfo = message;
+        Server.getInstance().AcceptClientUpdateAction();
     }
 
     // Recieve Thread
     public static void R (string message){
-        Server.RecieveThreadInfo = message;
-        Server.RecieveUpdateAction();
+        Server.getInstance().RecieveThreadInfo = message;
+        Server.getInstance().RecieveUpdateAction();
     }
 
     // Send Thread
     public static void S (string message){
-        Server.SendThreadInfo = message;
-        Server.SendUpdateAction();
+        Server.getInstance().SendThreadInfo = message;
+        Server.getInstance().SendUpdateAction();
     }
 }
 
@@ -40,14 +40,14 @@ public class Server : ServerClientParent
 
     # region Threads
     private Thread AcceptClientThread;
-    public static string AcceptClientThreadInfo = "";
-    public static Action AcceptClientUpdateAction = () => { };
-    public static Thread RecieveThread;
-    public static string RecieveThreadInfo = "";
-    public static Action RecieveUpdateAction = () => { };
-    public static Thread SendThread;
-    public static string SendThreadInfo = "";
-    public static Action SendUpdateAction = () => { };
+    public string AcceptClientThreadInfo = "";
+    public Action AcceptClientUpdateAction = () => { };
+    public Thread RecieveThread;
+    public string RecieveThreadInfo = "";
+    public Action RecieveUpdateAction = () => { };
+    public Thread SendThread;
+    public string SendThreadInfo = "";
+    public Action SendUpdateAction = () => { };
     # endregion
 
     public List<ServerPlayer> Players = new List<ServerPlayer>();
@@ -74,6 +74,7 @@ public class Server : ServerClientParent
     private Server() 
     {
         serverHierachy = new ServerHierachy(this);
+        Start();
     }
     private static Server instance = null;
     public static Server getInstance()
@@ -86,13 +87,14 @@ public class Server : ServerClientParent
     }
 
     public void Start(){
-       // AcceptClientThread = new Thread(AcceptClients);
-       // AcceptClientThread.Start();
-       // RecieveThread = new Thread(RecieveLoop);
-       // RecieveThread.Start();
-       // SendThread = new Thread(SendLoop);
-       // SendThread.Start();
-       IsRunning = true;
+        Debug.Log("Starting server");
+        AcceptClientThread = new Thread(AcceptClients);
+        AcceptClientThread.Start();
+        RecieveThread = new Thread(RecieveLoop);
+        RecieveThread.Start();
+        SendThread = new Thread(SendLoop);
+        SendThread.Start();
+        IsRunning = true;
     }
 
     ServerPlayer GetPlayer(int playerID){
@@ -131,6 +133,7 @@ public class Server : ServerClientParent
             {
                 ServerLogger.AC("SERVER: Waiting for a connection...");
                 Socket Handler = listener.Accept();
+                ServerLogger.AC("SERVER: Client connecting");
 
                 // Incoming data from the client.    
                 byte[] rec_bytes = new byte[1024];
@@ -159,11 +162,13 @@ public class Server : ServerClientParent
                 // Version mismatch
                 if (initPacket.Version != NetworkSettings.VERSION){
                     Handler.Send(ServerKickPacket.Build(0, "Wrong Version:\nServer: " + NetworkSettings.VERSION.ToString() + "   Client (You): " + initPacket.Version.ToString()));
+                    ServerLogger.AC("SERVER: Client kicked - wrong version");
                     continue;
                 }
                 
                 if (!AcceptingClients){
                     Handler.Send(ServerKickPacket.Build(0, "Server not accepting clients at this time"));
+                    ServerLogger.AC("SERVER: Client kicked - not accepting clients");
                     continue;
                 }
 

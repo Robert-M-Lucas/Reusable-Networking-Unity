@@ -10,30 +10,13 @@ using System;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
-public static class ServerLogger
-{
-    // Accept Client Thread
-    public static void AC (string message){
-        Server.getInstance().AcceptClientThreadInfo = message;
-        Server.getInstance().AcceptClientUpdateAction();
-    }
 
-    // Recieve Thread
-    public static void R (string message){
-        Server.getInstance().RecieveThreadInfo = message;
-        Server.getInstance().RecieveUpdateAction();
-    }
 
-    // Send Thread
-    public static void S (string message){
-        Server.getInstance().SendThreadInfo = message;
-        Server.getInstance().SendUpdateAction();
-    }
-}
 
 public class Server : ServerClientParent
 {
     public static bool IsRunning = false;
+    public bool stopping = false;
 
     private Socket Handler;
     private Socket listener;
@@ -66,7 +49,7 @@ public class Server : ServerClientParent
     
     ServerHierachy serverHierachy;
 
-    bool AcceptingClients = false;
+    public bool AcceptingClients = false;
 
     int playerIDCounter = 0;
 
@@ -77,9 +60,9 @@ public class Server : ServerClientParent
         Start();
     }
     private static Server instance = null;
-    public static Server getInstance()
+    public static Server getInstance(bool instantiate = false)
     {
-        if (instance is null){
+        if (instance is null && instantiate){
             instance = new Server();
         }
 
@@ -135,29 +118,45 @@ public class Server : ServerClientParent
                 Socket Handler = listener.Accept();
                 ServerLogger.AC("SERVER: Client connecting");
 
-                // Incoming data from the client.    
+                // Incoming data from the client.
                 byte[] rec_bytes = new byte[1024];
                 int total_rec = 0;
 
                 while (total_rec < 4) {
                     byte[] partial_bytes = new byte[1024];
-                    int bytesRec = Handler.Receive(partial_bytes);
+                    int bytesRec = Handler.Receive(rec_bytes);
 
                     total_rec += bytesRec;
-                    ArrayExtentions<byte>.Merge(rec_bytes, ArrayExtentions<byte>.Slice(partial_bytes, 0, bytesRec), total_rec);
+
+                    // string _out2 = "";
+                    // for (int i = 0; i < rec_bytes.Length; i++){
+                    //     _out2 += rec_bytes[i].ToString() + ":";
+                    // }
+                    // Debug.Log(_out2);
+
+                    Tuple<byte[], int> cleared = ArrayExtentions.ClearEmpty(rec_bytes);
+                    rec_bytes = cleared.Item1;
+                    total_rec -= cleared.Item2;
+
+                    ArrayExtentions.Merge(rec_bytes, ArrayExtentions.Slice(partial_bytes, 0, bytesRec), total_rec);
                 }
 
-                int packet_len = PacketBuilder.GetPacketLength(rec_bytes);
+                int packet_len = PacketBuilder.GetPacketLength(ArrayExtentions.Slice(rec_bytes, 0, 4));
+                
+                Debug.Log("Packet Len: " + packet_len);
 
                 while (total_rec < packet_len){
                     byte[] partial_bytes = new byte[1024];
                     int bytesRec = Handler.Receive(partial_bytes);
 
                     total_rec += bytesRec;
-                    ArrayExtentions<byte>.Merge(rec_bytes, ArrayExtentions<byte>.Slice(partial_bytes, 0, bytesRec), total_rec);
+                    ArrayExtentions.Merge(rec_bytes, ArrayExtentions.Slice(partial_bytes, 0, bytesRec), total_rec);
                 }
 
-                ClientConnectRequestPacket initPacket = new ClientConnectRequestPacket(PacketBuilder.Decode(rec_bytes));
+                ClientConnectRequestPacket initPacket = new ClientConnectRequestPacket(PacketBuilder.Decode(ArrayExtentions.Slice(rec_bytes, 0, packet_len)));
+                Debug.Log(initPacket.Version);
+                Debug.Log(initPacket.Name);
+                Debug.Log(initPacket.RID);
 
                 // Version mismatch
                 if (initPacket.Version != NetworkSettings.VERSION){
@@ -207,7 +206,7 @@ public class Server : ServerClientParent
     void SendLoop()
     {
         try{
-            while (true){
+            while (!stopping){
                 if (!SendQueue.IsEmpty){
                     Tuple<int, byte[]> to_send;
                     if (SendQueue.TryDequeue(out to_send)){
@@ -246,7 +245,7 @@ public class Server : ServerClientParent
 
         if (bytesRead > 0)
         {
-            ArrayExtentions<byte>.Merge(CurrentPlayer.long_buffer, CurrentPlayer.buffer, CurrentPlayer.long_buffer_size);
+            ArrayExtentions.Merge(CurrentPlayer.long_buffer, CurrentPlayer.buffer, CurrentPlayer.long_buffer_size);
             CurrentPlayer.long_buffer_size += bytesRead;
 
             ReprocessBuffer:
@@ -258,9 +257,9 @@ public class Server : ServerClientParent
 
             if (CurrentPlayer.current_packet_length != -1 && CurrentPlayer.long_buffer_size >= CurrentPlayer.current_packet_length)
             {
-                ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.ID, ArrayExtentions<byte>.Slice(CurrentPlayer.long_buffer, 0, CurrentPlayer.current_packet_length)));
+                ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.ID, ArrayExtentions.Slice(CurrentPlayer.long_buffer, 0, CurrentPlayer.current_packet_length)));
                 byte[] new_buffer = new byte[1024];
-                ArrayExtentions<byte>.Merge(new_buffer, ArrayExtentions<byte>.Slice(CurrentPlayer.long_buffer, CurrentPlayer.current_packet_length, 1024), 0);
+                ArrayExtentions.Merge(new_buffer, ArrayExtentions.Slice(CurrentPlayer.long_buffer, CurrentPlayer.current_packet_length, 1024), 0);
                 CurrentPlayer.long_buffer = new_buffer;
                 CurrentPlayer.long_buffer_size -= CurrentPlayer.current_packet_length;
                 CurrentPlayer.current_packet_length = -1;
@@ -291,7 +290,7 @@ public class Server : ServerClientParent
     void RecieveLoop()
     {
         try{
-            while (true)
+            while (!stopping)
             {
                 if (ContentQueue.IsEmpty){Thread.Sleep(2); continue;} // Nothing recieved
 
@@ -309,13 +308,16 @@ public class Server : ServerClientParent
     
     ~Server(){Stop();}
     public void Stop(){
+        Debug.Log("Server Shutting Down");
+        stopping = true;
         try{Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         try{listener.Shutdown(SocketShutdown.Both); }catch (Exception e){Debug.Log(e);}
+        Thread.Sleep(10);
         try{AcceptClientThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{RecieveThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{Players[0].Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         try{Players[1].Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
-        instance = new Server();
+        instance = null;
     }
 }

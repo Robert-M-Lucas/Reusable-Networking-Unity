@@ -3,12 +3,12 @@ import os
 import shutil
 import sys
 
-with open("C:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking\\Assets\\PacketGenerator\\Packets.txt", "r") as f:
+with open("C:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking\\Assets\\Package\\PacketGenerator\\Packets.txt", "r") as f:
     all_packets_split = f.read().split("\n")
 
 all_packets = [i.split("\\") for i in all_packets_split]
 
-path = "C:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking\\Assets\\Packets"
+path = "C:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking\\Assets\\Package\\Packets"
 
 for filename in os.listdir(path):
     file_path = os.path.join(path, filename)

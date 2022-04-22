@@ -74,11 +74,8 @@ public static class PacketBuilder
             cursor += c.Length;
         }
 
-        Debug.Log("Packet Len 1 " + (cursor-4).ToString());
         // Add packet length
         ArrayExtentions.Merge(buffer, BitConverter.GetBytes(cursor-4), 0);
-
-        Debug.Log("Packet Len 2 " + BitConverter.ToInt32(ArrayExtentions.Slice(buffer, 0, 4)));
 
         return ArrayExtentions.Slice(buffer, 0, cursor);
     }

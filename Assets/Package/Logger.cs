@@ -15,6 +15,9 @@ public static class ServerLogger
     public static string ServerWrap(string message){
         return "[SERVER] " + message;
     }
+    public static void ServerLog(string message){
+        Logger.Log(ServerWrap(message));
+    }
     // Accept Client Thread
     public static void AC (string message){
         message = "[AC] " + message;
@@ -43,7 +46,7 @@ public static class ServerLogger
 public static class Logger{
     public static void Log(string LogMessage){
         if (NetworkSettings.LOG_PATH != null){
-            File.AppendAllText(NetworkSettings.LOG_PATH, LogMessage + "\n");
+            File.AppendAllText(NetworkSettings.LOG_PATH, DateTime.Now.ToString("[hh:mm:ss] ") + LogMessage + "\n");
         }
     }
 }

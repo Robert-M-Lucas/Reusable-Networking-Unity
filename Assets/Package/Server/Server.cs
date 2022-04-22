@@ -70,7 +70,7 @@ public class Server : ServerClientParent
     }
 
     public void Start(){
-        Debug.Log("Starting server");
+        ServerLogger.ServerLog("Starting server");
         AcceptClientThread = new Thread(AcceptClients);
         AcceptClientThread.Start();
         RecieveThread = new Thread(RecieveLoop);
@@ -98,7 +98,7 @@ public class Server : ServerClientParent
     // Accept client
     void AcceptClients()
     {
-        Debug.Log("SERVER: Server Client Accept Thread Start");
+        ServerLogger.ServerLog("Server Client Accept Thread Start");
 
         IPAddress ipAddress = IPAddress.Any;
 
@@ -142,8 +142,6 @@ public class Server : ServerClientParent
                 }
 
                 int packet_len = PacketBuilder.GetPacketLength(ArrayExtentions.Slice(rec_bytes, 0, 4));
-                
-                Debug.Log("Packet Len: " + packet_len);
 
                 while (total_rec < packet_len){
                     byte[] partial_bytes = new byte[1024];
@@ -154,9 +152,6 @@ public class Server : ServerClientParent
                 }
 
                 ClientConnectRequestPacket initPacket = new ClientConnectRequestPacket(PacketBuilder.Decode(ArrayExtentions.Slice(rec_bytes, 0, packet_len)));
-                Debug.Log(initPacket.Version);
-                Debug.Log(initPacket.Name);
-                Debug.Log(initPacket.RID);
 
                 // Version mismatch
                 if (initPacket.Version != NetworkSettings.VERSION){
@@ -173,14 +168,15 @@ public class Server : ServerClientParent
 
                 // TODO: Add player join logic
                 ServerPlayer player = AddPlayer(Handler);
+                player.Name = initPacket.Name;
 
                 foreach (Action<ServerPlayer> action in serverHierachy.OnPlayerJoinActions){
                     action(player);
                 }
                 
-                SendMessage(player.ID, ServerConnectAcceptPacket.Build(RID, player.ID), true);
+                SendMessage(player.ID, ServerConnectAcceptPacket.Build(0, player.ID), false);
 
-                ServerLogger.AC("Player " + player.ID.ToString() + " (" + initPacket.Name + ")" + " connected");
+                ServerLogger.AC("Player " + player.GetUniqueString() + " connected. Beginning recieve");
 
                 Handler.BeginReceive(player.buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), player);
             }
@@ -189,6 +185,7 @@ public class Server : ServerClientParent
         catch (Exception e)
         {
             Debug.LogError(e.ToString());
+            ServerLogger.AC("[ERROR] " + e.ToString());
         }
     }
 
@@ -210,8 +207,8 @@ public class Server : ServerClientParent
                 if (!SendQueue.IsEmpty){
                     Tuple<int, byte[]> to_send;
                     if (SendQueue.TryDequeue(out to_send)){
-                        Debug.Log("SERVER: Sent " + to_send.Item2);
-                        Players[to_send.Item1].Handler.Send(to_send.Item2);
+                        ServerLogger.S("To " + GetPlayer(to_send.Item1).GetUniqueString() + "; Sent packet");
+                        GetPlayer(to_send.Item1).Handler.Send(to_send.Item2);
                     }
                 }
                 else if (!RequiredResponseQueue.IsEmpty){
@@ -219,8 +216,8 @@ public class Server : ServerClientParent
                     if (RequiredResponseQueue.TryDequeue(out rid)){
                         if (RequireResponse.ContainsKey(rid)){
                             Tuple<int, byte[]> to_send = RequireResponse[rid];
-                            Debug.Log("SERVER: Sent " + to_send.Item2);
-                            Players[to_send.Item1].Handler.Send(to_send.Item2);
+                            ServerLogger.S("To " + GetPlayer(to_send.Item1).GetUniqueString() + "; Sent RID packet");
+                            GetPlayer(to_send.Item1).Handler.Send(to_send.Item2);
                             RequiredResponseQueue.Enqueue(rid);
                         }
                     }
@@ -231,6 +228,7 @@ public class Server : ServerClientParent
         }
         catch (Exception e){
             Debug.LogError(e);
+            ServerLogger.S("[ERROR] " + e.ToString());
         }
     }
 
@@ -257,6 +255,7 @@ public class Server : ServerClientParent
 
             if (CurrentPlayer.current_packet_length != -1 && CurrentPlayer.long_buffer_size >= CurrentPlayer.current_packet_length)
             {
+                ServerLogger.R("Recieved Packet from " + CurrentPlayer.GetUniqueString());
                 ContentQueue.Enqueue(new Tuple<int, byte[]>(CurrentPlayer.ID, ArrayExtentions.Slice(CurrentPlayer.long_buffer, 0, CurrentPlayer.current_packet_length)));
                 byte[] new_buffer = new byte[1024];
                 ArrayExtentions.Merge(new_buffer, ArrayExtentions.Slice(CurrentPlayer.long_buffer, CurrentPlayer.current_packet_length, 1024), 0);
@@ -297,27 +296,32 @@ public class Server : ServerClientParent
                 Tuple<int, byte[]> content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
-                serverHierachy.HandlePacket(content.Item2);
+                ServerLogger.R("Handling Packet");
+                bool handled = serverHierachy.HandlePacket(content.Item2);
+                ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
 
             }
         }
         catch (Exception e){
             Debug.LogError(e);
+            ServerLogger.R("[ERROR] " + e.ToString());
         }
     }
     
     ~Server(){Stop();}
     public void Stop(){
-        Debug.Log("Server Shutting Down");
+        ServerLogger.ServerLog("Server Shutting Down");
         stopping = true;
         try{Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         try{listener.Shutdown(SocketShutdown.Both); }catch (Exception e){Debug.Log(e);}
-        Thread.Sleep(10);
+        Thread.Sleep(5);
         try{AcceptClientThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{RecieveThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
-        try{Players[0].Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
-        try{Players[1].Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
+        foreach (ServerPlayer player in Players){
+            try{player.Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
+        }
         instance = null;
+        ServerLogger.ServerLog("Server Shut Down Complete");
     }
 }

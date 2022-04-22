@@ -2,3 +2,4 @@
 1\ServerConnectAccept\GivenUID\int
 2\ServerKick\Reason\string
 3\ServerOtherClientInfo\ClientUID\int\ClientName\string
+4\RandomCustomClient\a\int\b\string

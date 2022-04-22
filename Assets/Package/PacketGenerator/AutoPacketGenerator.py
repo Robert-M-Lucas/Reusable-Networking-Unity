@@ -1,4 +1,3 @@
-from operator import le
 import os
 import shutil
 import sys

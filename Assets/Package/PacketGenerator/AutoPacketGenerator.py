@@ -1,9 +1,20 @@
+from operator import le
 import os
 import shutil
 import sys
+import time
+
+start_time = time.time()
 
 with open("C:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking\\Assets\\Package\\PacketGenerator\\Packets.txt", "r") as f:
     all_packets_split = f.read().split("\n")
+
+index = 0
+while index < len(all_packets_split):
+    if "\\" not in all_packets_split[index]:
+        all_packets_split.pop(index)
+    else:
+        index += 1
 
 all_packets = [i.split("\\") for i in all_packets_split]
 
@@ -89,3 +100,5 @@ public class {packet_name}Packet {{
 
     with open(f"{path}\\{filename}", "w+") as f:
         f.write(data)
+
+print(f"Time taken: {(time.time()-start_time)*1000}ms")

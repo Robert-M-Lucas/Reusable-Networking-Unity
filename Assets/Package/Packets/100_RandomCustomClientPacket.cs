@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 
 public class RandomCustomClientPacket {
-    public const int UID = 4;
+    public const int UID = 100;
     public int RID;
     public int a;
     public string b;

@@ -16,6 +16,11 @@ public static class ServerLogger
         return "[SERVER] " + message;
     }
     public static void ServerLog(string message){
+        try{
+            Server.getInstance().ServerInfo = ServerWrap(message);
+            Server.getInstance().ServerInfoUpdateAction();
+        }
+        catch (NullReferenceException){}
         Logger.Log(ServerWrap(message));
     }
     // Accept Client Thread
@@ -49,6 +54,11 @@ public static class ClientLogger
         return "[CLIENT] " + message;
     }
     public static void ClientLog(string message){
+        try{
+        Client.getInstance().ClientInfo = ClientWrap(message);
+        Client.getInstance().ClientInfoUpdateAction();
+        }
+        catch (NullReferenceException){}
         Logger.Log(ClientWrap(message));
     }
     // Connect Thread

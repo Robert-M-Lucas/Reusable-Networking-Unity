@@ -6,12 +6,14 @@ in future games I make
 
 ### Setup
 #### Required Setup
-- Put ```NetworkSettings.MainThreadStart();``` at the start of an Awake function in a MonoBehaviour object that's in the first scene in the build order. This is because some constants that need to be accessed from a separate thread can only be accessed through the main thread.
+- Put ```NetworkSettings.MainThreadStart();``` at the start of an ```Awake()```function in a MonoBehaviour object that's in the first scene in the build order. This is because some constants that need to be accessed from a separate thread can only be accessed through the main thread.
+- Put ```NetworkController.Shutdown();``` in an ```OnApplicationQuit()``` function in a MonoBehaviour object thats in the active scene to ensure correct shutdown.
 
 #### Packet Setup
 - To create custom packets modify the ```PacketGenerator\Packets.txt```
 - Each packet is its own line, each argument is separated by a ```\```
 - ```UID\Name\Attribute1\Attribute1Type\Attribute2\Attribute2Type...```
+- You can use an equals after an attribute name to give it a default value
 - Current supported types are ```int```, ```double``` and ```string```. (NOT FLOAT)
 - Any line in ```Packets.txt``` that doesn't contain a ```\``` is seen as a comment
 

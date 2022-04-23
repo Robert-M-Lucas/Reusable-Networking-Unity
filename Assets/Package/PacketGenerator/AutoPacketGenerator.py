@@ -52,14 +52,16 @@ public class {packet_name}Packet {{
 """
     data += f"    public const int UID = {uid};\n"
     for i in attributes[1:]:
-        data += "    public " + i[1] + " " + i[0] + ";" + "\n"
+        splitted = i[0].split("=")
+        data += "    public " + i[1] + " " + splitted[0] + ";" + "\n"
 
     data += f"""    public {packet_name}Packet(Packet packet){{
         RID = packet.RID;
 """
 
     for j, i in enumerate(attributes[2:]):
-        data += "        " + i[0] + " = "
+        splitted = i[0].split("=")
+        data += "        " + splitted[0] + " = "
         if i[1] == "string":
             data += "ASCIIEncoding.ASCII.GetString"
         elif i[1] == "int":
@@ -79,7 +81,11 @@ public class {packet_name}Packet {{
     data += """    public static byte[] Build("""
 
     for i in attributes[1:]:
-        data += i[1] + " _" + i[0] + ", "
+        splitted = i[0].split("=")
+        data += i[1] + " _" + splitted[0]
+        if len(splitted) > 1:
+            data += "=" + splitted[1]
+        data += ", "
 
     data = data[:-2]
 
@@ -88,10 +94,11 @@ public class {packet_name}Packet {{
 """
 
     for i in attributes[2:]:
+        splitted = i[0].split("=")
         if i[1] == "string":
-            data += f"            contents.Add(ASCIIEncoding.ASCII.GetBytes(_{i[0]}));\n"
+            data += f"            contents.Add(ASCIIEncoding.ASCII.GetBytes(_{splitted[0]}));\n"
         else:
-            data += f"            contents.Add(BitConverter.GetBytes(_{i[0]}));\n"
+            data += f"            contents.Add(BitConverter.GetBytes(_{splitted[0]}));\n"
 
     data += """            return PacketBuilder.Build(UID, contents, _RID);
     }

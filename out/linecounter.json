@@ -1,0 +1,296 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.7",
+    "workspace": "c:\\Users\\rober\\Documents\\UnityProjects\\Reusable Networking",
+    "linecount": [
+        {
+            "version": "0.2.7",
+            "counttime": "2022-04-23 18:07:57",
+            "filesum": 37,
+            "codesum": 3386,
+            "commentsum": 70,
+            "blanksum": 253,
+            "statistics": {
+                "": {
+                    "code": 10,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".sln": {
+                    "code": 17,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".csproj": {
+                    "code": 765,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".cs": {
+                    "code": 1018,
+                    "comment": 70,
+                    "blank": 193
+                },
+                ".settings": {
+                    "code": 1,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".log": {
+                    "code": 46,
+                    "comment": 0,
+                    "blank": 4
+                },
+                ".json": {
+                    "code": 449,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".md": {
+                    "code": 23,
+                    "comment": 0,
+                    "blank": 9
+                },
+                ".dwlt": {
+                    "code": 941,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".txt": {
+                    "code": 4,
+                    "comment": 0,
+                    "blank": 2
+                },
+                ".py": {
+                    "code": 112,
+                    "comment": 0,
+                    "blank": 45
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 0,
+                    "code": 10,
+                    "comment": 0,
+                    "filename": ".gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 765,
+                    "comment": 0,
+                    "filename": "Assembly-CSharp.csproj"
+                },
+                {
+                    "blank": 4,
+                    "code": 31,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\ArrayExtentions.cs"
+                },
+                {
+                    "blank": 6,
+                    "code": 23,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\CircularArray.cs"
+                },
+                {
+                    "blank": 38,
+                    "code": 197,
+                    "comment": 12,
+                    "filename": "Assets\\Package\\Client\\Client.cs"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Client\\ClientPlayer.cs"
+                },
+                {
+                    "blank": 3,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Client\\DefaultClientPacketHandler.cs"
+                },
+                {
+                    "blank": 8,
+                    "code": 28,
+                    "comment": 10,
+                    "filename": "Assets\\Package\\Hierachy.cs"
+                },
+                {
+                    "blank": 12,
+                    "code": 109,
+                    "comment": 6,
+                    "filename": "Assets\\Package\\Logger.cs"
+                },
+                {
+                    "blank": 1,
+                    "code": 26,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\NetworkController.cs"
+                },
+                {
+                    "blank": 3,
+                    "code": 10,
+                    "comment": 1,
+                    "filename": "Assets\\Package\\NetworkSettings.cs"
+                },
+                {
+                    "blank": 20,
+                    "code": 79,
+                    "comment": 8,
+                    "filename": "Assets\\Package\\PacketBuilder.cs"
+                },
+                {
+                    "blank": 24,
+                    "code": 66,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\PacketGenerator\\AutoPacketGenerator.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\PacketGenerator\\Packets.txt"
+                },
+                {
+                    "blank": 21,
+                    "code": 46,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\PacketGenerator\\UNUSED - PacketGenerator.py"
+                },
+                {
+                    "blank": 1,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\PacketHandlerParent.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\0_ClientConnectRequestPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\100_RandomCustomClientPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 24,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\101_AnotherTestPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 18,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\1_ServerConnectAcceptPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 18,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\2_ServerKickPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\3_ServerOtherClientInfoPacket.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Packets\\4_PingPacket.cs"
+                },
+                {
+                    "blank": 4,
+                    "code": 8,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Server Client Shared\\ServerClientParent.cs"
+                },
+                {
+                    "blank": 7,
+                    "code": 29,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Server Client Shared\\ServerClientPlayer.cs"
+                },
+                {
+                    "blank": 3,
+                    "code": 11,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Server\\DefaultServerPacketHandler.cs"
+                },
+                {
+                    "blank": 61,
+                    "code": 253,
+                    "comment": 24,
+                    "filename": "Assets\\Package\\Server\\Server.cs"
+                },
+                {
+                    "blank": 2,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "Assets\\Package\\Server\\ServerPlayer.cs"
+                },
+                {
+                    "blank": 6,
+                    "code": 33,
+                    "comment": 9,
+                    "filename": "Assets\\SampleNetworkManager.cs"
+                },
+                {
+                    "blank": 3,
+                    "code": 43,
+                    "comment": 0,
+                    "filename": "Logs\\Packages-Update.log"
+                },
+                {
+                    "blank": 1,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "Logs\\shadercompiler-UnityShaderCompiler.exe0.log"
+                },
+                {
+                    "blank": 0,
+                    "code": 45,
+                    "comment": 0,
+                    "filename": "Packages\\manifest.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 404,
+                    "comment": 0,
+                    "filename": "Packages\\packages-lock.json"
+                },
+                {
+                    "blank": 9,
+                    "code": 23,
+                    "comment": 0,
+                    "filename": "README.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 17,
+                    "comment": 0,
+                    "filename": "Reusable Networking.sln"
+                },
+                {
+                    "blank": 0,
+                    "code": 941,
+                    "comment": 0,
+                    "filename": "UserSettings\\Layouts\\default-2021.dwlt"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "UserSettings\\Search.settings"
+                }
+            ]
+        }
+    ]
+}

@@ -23,6 +23,8 @@ public class Client : ServerClientParent
 
     # endregion
 
+    public string ClientInfo = "";
+    public Action ClientInfoUpdateAction = () => { };
     bool connected = false;
     public Thread ConnectThread;
     public string ConnectThreadInfo = "";
@@ -33,6 +35,8 @@ public class Client : ServerClientParent
     public Thread SendThread;
     public string SendThreadInfo = "";
     public Action SendUpdateAction = () => { };
+
+    public Action DisconnectAction = () => { };
 
     public ServerClientHierachy hierachy;
 
@@ -47,6 +51,7 @@ public class Client : ServerClientParent
     private Client() 
     {
         hierachy = new ServerClientHierachy(this);
+        hierachy.Hierachy.Add(new DefaultClientPacketHandler());
     }
 
     private static Client instance = null;
@@ -65,13 +70,18 @@ public class Client : ServerClientParent
 
     private void Start(){
         ClientLogger.ClientLog("Starting client");
-        ConnectThread = new Thread(Connect);
     }
 
-    void Connect(){
+    public void Connect(string IP, string Password=""){
+        ClientLogger.C("Starting connection thread");
+        ConnectThread = new Thread(() => {ConnectThreaded(IP, Password);});
+        ConnectThread.Start();
+    }
+
+    void ConnectThreaded(string IP, string Password=""){
         ClientLogger.C("Starting connection");
 
-        IPAddress HostIpA = IPAddress.Parse("127.0.0.1");
+        IPAddress HostIpA = IPAddress.Parse(IP);
         IPEndPoint RemoteEP = new IPEndPoint(HostIpA, 8108);
 
         Handler = new Socket(HostIpA.AddressFamily,
@@ -82,9 +92,9 @@ public class Client : ServerClientParent
         ClientLogger.C("Socket connected to " +
             Handler.RemoteEndPoint.ToString());
   
-        Handler.Send(ClientConnectRequestPacket.Build(0, "Me", NetworkSettings.VERSION));
+        Handler.Send(ClientConnectRequestPacket.Build(0, "Me", NetworkSettings.VERSION, Password));
 
-        return;
+        Handler.BeginReceive(server_buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), null);
 
         ClientLogger.C("Connection successful, starting other threads");
         connected = true;
@@ -199,7 +209,9 @@ public class Client : ServerClientParent
 
                 ClientLogger.R("Handling Packet");
                 bool handled = hierachy.HandlePacket(content);
-                ClientLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content).UID + ". Probable hierachy error");
+                if (!handled){
+                    ClientLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content).UID + ". Probable hierachy error");
+                }
 
             }
         }
@@ -210,6 +222,16 @@ public class Client : ServerClientParent
     }
     
     ~Client(){Stop();}
+    public void Disconnect(){
+        try{
+            DisconnectAction();
+        }
+        catch (Exception e){
+            Debug.LogError(e);
+            ClientLogger.ClientLog("Error while disconnecting: " + e);
+        }
+        Stop();
+    }
     public void Stop(){
         ClientLogger.ClientLog("Client Shutting Down");
         stopping = true;

@@ -15,11 +15,16 @@ using Debug = UnityEngine.Debug;
 
 public class Server : ServerClientParent
 {
+    public string server_password = "";
+
     public static bool IsRunning = false;
     // public bool stopping = false;
 
     private Socket Handler;
     private Socket listener;
+
+    public string ServerInfo = "";
+    public Action ServerInfoUpdateAction = () => { };
 
     # region Threads
     private Thread AcceptClientThread;
@@ -57,7 +62,7 @@ public class Server : ServerClientParent
     private Server() 
     {
         hierachy = new ServerClientHierachy(this);
-        Start();
+        hierachy.Hierachy.Add(new DefaultServerPacketHandler());
     }
     private static Server instance = null;
     public static bool has_instance {
@@ -156,18 +161,24 @@ public class Server : ServerClientParent
 
                 ClientConnectRequestPacket initPacket = new ClientConnectRequestPacket(PacketBuilder.Decode(ArrayExtentions.Slice(rec_bytes, 0, packet_len)));
 
-                // Version mismatch
-                if (initPacket.Version != NetworkSettings.VERSION){
-                    Handler.Send(ServerKickPacket.Build(0, "Wrong Version:\nServer: " + NetworkSettings.VERSION.ToString() + "   Client (You): " + initPacket.Version.ToString()));
-                    ServerLogger.AC("SERVER: Client kicked - wrong version");
-                    continue;
-                }
-                
                 if (!AcceptingClients){
                     Handler.Send(ServerKickPacket.Build(0, "Server not accepting clients at this time"));
                     ServerLogger.AC("SERVER: Client kicked - not accepting clients");
                     continue;
                 }
+
+                if (server_password != "" && initPacket.Password != server_password){
+                    Handler.Send(ServerKickPacket.Build(0, "Wrong Password: '" + initPacket.Password + "'"));
+                    ServerLogger.AC("SERVER: Client kicked - wrong password");
+                    continue;
+                }
+
+                // Version mismatch
+                if (initPacket.Version != NetworkSettings.VERSION){
+                    Handler.Send(ServerKickPacket.Build(0, "Wrong Version:\nServer: " + NetworkSettings.VERSION.ToString() + "   Client (You): " + initPacket.Version));
+                    ServerLogger.AC("SERVER: Client kicked - wrong version");
+                    continue;
+                } 
 
                 // TODO: Add player join logic
                 ServerPlayer player = AddPlayer(Handler);
@@ -301,7 +312,9 @@ public class Server : ServerClientParent
 
                 ServerLogger.R("Handling Packet");
                 bool handled = hierachy.HandlePacket(content.Item2);
-                ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
+                if (!handled){
+                    ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
+                }
 
             }
         }
@@ -322,6 +335,7 @@ public class Server : ServerClientParent
         try{RecieveThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
         foreach (ServerPlayer player in Players){
+            try{player.Handler.Send(ServerKickPacket.Build(0, "Server shutting down"));}catch (Exception e){Debug.Log(e);}
             try{player.Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         }
         instance = null;

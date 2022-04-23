@@ -1,0 +1,64 @@
+===============================================================================
+EXTENSION NAME : linecounter
+EXTENSION VERSION : 0.2.7
+-------------------------------------------------------------------------------
+count time : 2022-04-23 18:07:57
+count workspace : c:\Users\rober\Documents\UnityProjects\Reusable Networking
+total files : 37
+total code lines : 3386
+total comment lines : 70
+total blank lines : 253
+
+    statistics
+   |      extension|     total code|  total comment|    total blank|percent|
+   -------------------------------------------------------------------------
+   |               |             10|              0|              0|   0.30|
+   |           .sln|             17|              0|              0|   0.50|
+   |        .csproj|            765|              0|              0|     23|
+   |            .cs|           1018|             70|            193|     30|
+   |      .settings|              1|              0|              0|  0.030|
+   |           .log|             46|              0|              4|    1.4|
+   |          .json|            449|              0|              0|     13|
+   |            .md|             23|              0|              9|   0.68|
+   |          .dwlt|            941|              0|              0|     28|
+   |           .txt|              4|              0|              2|   0.12|
+   |            .py|            112|              0|             45|    3.3|
+   -------------------------------------------------------------------------
+.gitignore, code is 10, comment is 0, blank is 0.
+Assembly-CSharp.csproj, code is 765, comment is 0, blank is 0.
+Assets\Package\ArrayExtentions.cs, code is 31, comment is 0, blank is 4.
+Assets\Package\CircularArray.cs, code is 23, comment is 0, blank is 6.
+Assets\Package\Client\Client.cs, code is 197, comment is 12, blank is 38.
+Assets\Package\Client\ClientPlayer.cs, code is 0, comment is 0, blank is 0.
+Assets\Package\Client\DefaultClientPacketHandler.cs, code is 19, comment is 0, blank is 3.
+Assets\Package\Hierachy.cs, code is 28, comment is 10, blank is 8.
+Assets\Package\Logger.cs, code is 109, comment is 6, blank is 12.
+Assets\Package\NetworkController.cs, code is 26, comment is 0, blank is 1.
+Assets\Package\NetworkSettings.cs, code is 10, comment is 1, blank is 3.
+Assets\Package\PacketBuilder.cs, code is 79, comment is 8, blank is 20.
+Assets\Package\PacketGenerator\AutoPacketGenerator.py, code is 66, comment is 0, blank is 24.
+Assets\Package\PacketGenerator\Packets.txt, code is 4, comment is 0, blank is 2.
+Assets\Package\PacketGenerator\UNUSED - PacketGenerator.py, code is 46, comment is 0, blank is 21.
+Assets\Package\PacketHandlerParent.cs, code is 6, comment is 0, blank is 1.
+Assets\Package\Packets\0_ClientConnectRequestPacket.cs, code is 21, comment is 0, blank is 2.
+Assets\Package\Packets\100_RandomCustomClientPacket.cs, code is 21, comment is 0, blank is 2.
+Assets\Package\Packets\101_AnotherTestPacket.cs, code is 24, comment is 0, blank is 2.
+Assets\Package\Packets\1_ServerConnectAcceptPacket.cs, code is 18, comment is 0, blank is 2.
+Assets\Package\Packets\2_ServerKickPacket.cs, code is 18, comment is 0, blank is 2.
+Assets\Package\Packets\3_ServerOtherClientInfoPacket.cs, code is 21, comment is 0, blank is 2.
+Assets\Package\Packets\4_PingPacket.cs, code is 21, comment is 0, blank is 2.
+Assets\Package\Server Client Shared\ServerClientParent.cs, code is 8, comment is 0, blank is 4.
+Assets\Package\Server Client Shared\ServerClientPlayer.cs, code is 29, comment is 0, blank is 7.
+Assets\Package\Server\DefaultServerPacketHandler.cs, code is 11, comment is 0, blank is 3.
+Assets\Package\Server\Server.cs, code is 253, comment is 24, blank is 61.
+Assets\Package\Server\ServerPlayer.cs, code is 12, comment is 0, blank is 2.
+Assets\SampleNetworkManager.cs, code is 33, comment is 9, blank is 6.
+Logs\Packages-Update.log, code is 43, comment is 0, blank is 3.
+Logs\shadercompiler-UnityShaderCompiler.exe0.log, code is 3, comment is 0, blank is 1.
+Packages\manifest.json, code is 45, comment is 0, blank is 0.
+Packages\packages-lock.json, code is 404, comment is 0, blank is 0.
+README.md, code is 23, comment is 0, blank is 9.
+Reusable Networking.sln, code is 17, comment is 0, blank is 0.
+UserSettings\Layouts\default-2021.dwlt, code is 941, comment is 0, blank is 0.
+UserSettings\Search.settings, code is 1, comment is 0, blank is 0.
+===============================================================================

@@ -1,7 +1,7 @@
 0 - 100: Default Packets
 
 Initial client connection request
-0\ClientConnectRequest\Name\string\Version\string
+0\ClientConnectRequest\Name\string\Version\string\Password=""\string
 
 Server accepting client's connection
 1\ServerConnectAccept\GivenUID\int

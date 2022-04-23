@@ -16,7 +16,13 @@ Ping packet
 
 *****************************************
 
-100 - 199: Theses are random test packets
+100 - 199: Theses are test packets
 
-100\RandomCustomClient\a\int\b\string
-101\AnotherTest\attributeone\int\attributetwo\string\attributethree\double
+100\SampleTest\ArgOne\int\ArgTwo\double\ArgThree\string\ArgFour="defaultVal"\string
+101\SampleTestTwo\ArgOne\int\ArgTwo\double\ArgThree\string\ArgFour="defaultVal"\string
+
+*****************************************
+
+200-299: Sample Project Packets
+200\PositionUpdateClient\x\double\y\double\z\double
+201\PositionUpdateServer\PlayerID\int\x\double\y\double\z\double

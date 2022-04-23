@@ -51,7 +51,7 @@ public class Client : ServerClientParent
     private Client() 
     {
         hierachy = new ServerClientHierachy(this);
-        hierachy.Hierachy.Add(new DefaultClientPacketHandler());
+        DefaultHierachy.Add(new DefaultClientPacketHandler());
     }
 
     private static Client instance = null;
@@ -140,6 +140,7 @@ public class Client : ServerClientParent
                 Thread.Sleep(5);
             }
         }
+        catch (ThreadAbortException) {}
         catch (Exception e){
             Debug.LogError(e);
             ClientLogger.S("[ERROR] " + e.ToString());
@@ -202,7 +203,8 @@ public class Client : ServerClientParent
         try{
             while (!stopping)
             {
-                if (ContentQueue.IsEmpty){Thread.Sleep(2); continue;} // Nothing recieved
+                if (ContentQueue.IsEmpty){//Thread.Sleep(2);
+                continue;} // Nothing recieved
 
                 byte[] content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
@@ -215,6 +217,7 @@ public class Client : ServerClientParent
 
             }
         }
+        catch (ThreadAbortException) {}
         catch (Exception e){
             Debug.LogError(e);
             ClientLogger.R("[ERROR] " + e.ToString());

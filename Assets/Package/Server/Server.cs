@@ -52,7 +52,7 @@ public class Server : ServerClientParent
 
     // Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     
-    ServerClientHierachy hierachy;
+    public ServerClientHierachy hierachy;
 
     public bool AcceptingClients = false;
 
@@ -62,7 +62,7 @@ public class Server : ServerClientParent
     private Server() 
     {
         hierachy = new ServerClientHierachy(this);
-        hierachy.Hierachy.Add(new DefaultServerPacketHandler());
+        DefaultHierachy.Add(new DefaultServerPacketHandler());
     }
     private static Server instance = null;
     public static bool has_instance {
@@ -88,7 +88,7 @@ public class Server : ServerClientParent
         IsRunning = true;
     }
 
-    ServerPlayer GetPlayer(int playerID){
+    public ServerPlayer GetPlayer(int playerID){
         foreach (ServerPlayer player in Players){
             if (player.ID == playerID){
                 return player;
@@ -240,6 +240,7 @@ public class Server : ServerClientParent
                 Thread.Sleep(5);
             }
         }
+        catch (ThreadAbortException) {}
         catch (Exception e){
             Debug.LogError(e);
             ServerLogger.S("[ERROR] " + e.ToString());
@@ -305,19 +306,21 @@ public class Server : ServerClientParent
         try{
             while (!stopping)
             {
-                if (ContentQueue.IsEmpty){Thread.Sleep(2); continue;} // Nothing recieved
+                if (ContentQueue.IsEmpty){//Thread.Sleep(2); 
+                continue;} // Nothing recieved
 
                 Tuple<int, byte[]> content;
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
                 ServerLogger.R("Handling Packet");
-                bool handled = hierachy.HandlePacket(content.Item2);
+                bool handled = hierachy.HandlePacket(content.Item2, content.Item1);
                 if (!handled){
                     ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
                 }
 
             }
         }
+        catch (ThreadAbortException) {}
         catch (Exception e){
             Debug.LogError(e);
             ServerLogger.R("[ERROR] " + e.ToString());

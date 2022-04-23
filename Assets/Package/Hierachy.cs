@@ -24,8 +24,8 @@ public class ServerClientHierachy
         ServerClient = serverClient;
     }
 
-    public bool HandlePacket(byte[] data){
-        Packet packet = PacketBuilder.Decode(data);
+    public bool HandlePacket(byte[] data, int from = -1){
+        Packet packet = PacketBuilder.Decode(data, from);
 
         foreach (PacketHandlerParent packetHandler in ServerClient.DefaultHierachy){
             if (packetHandler.UIDtoAction.ContainsKey(packet.UID)){

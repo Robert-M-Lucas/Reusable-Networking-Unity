@@ -3,6 +3,7 @@ This is made to function as reusable code for easy implementation of networking
 in future games I make
 
 ## How to use
+See ```SampleNetworkManager.cs```, ```SampleServerPacketHandler.cs``` and ```SampleClientPacketHandler.cs``` for examples of everything you can do.
 
 ### Setup
 #### Required Setup

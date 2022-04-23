@@ -11,12 +11,14 @@ public class PacketDictionary: Dictionary<string, string>{
 public struct Packet{
     public int UID;
     public int RID;
+    public int From;
     public List<byte[]> contents;
 
-    public Packet(int _UID, int _RID, List<byte[]> _contents){
+    public Packet(int _UID, int _RID, List<byte[]> _contents, int from = -1){
         UID = _UID;
         RID = _RID;
         contents = _contents;
+        From = from;
     }
 }
 
@@ -84,7 +86,7 @@ public static class PacketBuilder
         return encoder.GetBytes(input);
     }
 
-    public static Packet Decode(byte[] data) {
+    public static Packet Decode(byte[] data, int from = -1) {
 
         int cursor = 4;
         int UID = BitConverter.ToInt32(ArrayExtentions.Slice(data, cursor, cursor + UIDLen));
@@ -102,6 +104,6 @@ public static class PacketBuilder
             contents.Add(content);
         }
 
-        return new Packet(UID, RID, contents);
+        return new Packet(UID, RID, contents, from);
     }
 }

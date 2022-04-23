@@ -2,19 +2,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+/*
 public class ServerHierachy: ServerClientHierachy{
 
-    public List<Action<ServerPlayer>> OnPlayerJoinActions = new List<Action<ServerPlayer>>();
+    
 
     public ServerHierachy(Server server): base(server){
 
     }
 }
+*/
 
 public class ServerClientHierachy
 {
     ServerClientParent ServerClient;
 
+    public List<Action<ServerPlayer>> OnPlayerJoinActions = new List<Action<ServerPlayer>>();
     public List<PacketHandlerParent> Hierachy = new List<PacketHandlerParent>();
 
     public ServerClientHierachy(ServerClientParent serverClient){

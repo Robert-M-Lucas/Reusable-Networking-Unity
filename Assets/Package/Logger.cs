@@ -43,6 +43,38 @@ public static class ServerLogger
     }
 }
 
+public static class ClientLogger
+{
+    public static string ClientWrap(string message){
+        return "[CLIENT] " + message;
+    }
+    public static void ClientLog(string message){
+        Logger.Log(ClientWrap(message));
+    }
+    // Connect Thread
+    public static void C (string message){
+        message = "[C] " + message;
+        Client.getInstance().ConnectThreadInfo = ClientWrap(message);
+        Client.getInstance().ConnectUpdateAction();
+        Logger.Log(message);
+    }
+    // Recieve Thread
+    public static void R (string message){
+        message = "[R] " + message;
+        Client.getInstance().RecieveThreadInfo = ClientWrap(message);
+        Client.getInstance().RecieveUpdateAction();
+        Logger.Log(message);
+    }
+
+    // Send Thread
+    public static void S (string message){
+        message = "[S] " + message;
+        Client.getInstance().SendThreadInfo = ClientWrap(message);
+        Client.getInstance().SendUpdateAction();
+        Logger.Log(message);
+    }
+}
+
 public static class Logger{
     public static Thread FileWriteThread = new Thread(ThreadedWrite);
     public static bool Stop = false;
@@ -51,7 +83,7 @@ public static class Logger{
 
     public static void Log(string LogMessage){
         if (NetworkSettings.LOG_PATH != null){
-            ToWrite.Enqueue(DateTime.Now.ToString("[hh:mm:ss] ") + LogMessage + "\n");
+            ToWrite.Enqueue(DateTime.Now.ToString("[hh:mm:ss.ffff] ") + LogMessage + "\n");
             
             if (FileWriteThread.ThreadState != ThreadState.Running & FileWriteThread.ThreadState != ThreadState.WaitSleepJoin){
                 try{

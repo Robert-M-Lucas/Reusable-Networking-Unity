@@ -16,7 +16,7 @@ using Debug = UnityEngine.Debug;
 public class Server : ServerClientParent
 {
     public static bool IsRunning = false;
-    public bool stopping = false;
+    // public bool stopping = false;
 
     private Socket Handler;
     private Socket listener;
@@ -47,7 +47,7 @@ public class Server : ServerClientParent
 
     // Dictionary<string, Func<string, Server, int, bool>> PacketActions = new Dictionary<string, Func<string, Server, int, bool>>();
     
-    ServerHierachy serverHierachy;
+    ServerClientHierachy hierachy;
 
     public bool AcceptingClients = false;
 
@@ -56,16 +56,19 @@ public class Server : ServerClientParent
     // Singleton setup
     private Server() 
     {
-        serverHierachy = new ServerHierachy(this);
+        hierachy = new ServerClientHierachy(this);
         Start();
     }
     private static Server instance = null;
+    public static bool has_instance {
+    get {
+        return !(instance is null);
+    }}
     public static Server getInstance(bool instantiate = false)
     {
         if (instance is null && instantiate){
             instance = new Server();
         }
-
         return instance;
     }
 
@@ -170,7 +173,7 @@ public class Server : ServerClientParent
                 ServerPlayer player = AddPlayer(Handler);
                 player.Name = initPacket.Name;
 
-                foreach (Action<ServerPlayer> action in serverHierachy.OnPlayerJoinActions){
+                foreach (Action<ServerPlayer> action in hierachy.OnPlayerJoinActions){
                     action(player);
                 }
                 
@@ -297,7 +300,7 @@ public class Server : ServerClientParent
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
                 ServerLogger.R("Handling Packet");
-                bool handled = serverHierachy.HandlePacket(content.Item2);
+                bool handled = hierachy.HandlePacket(content.Item2);
                 ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
 
             }

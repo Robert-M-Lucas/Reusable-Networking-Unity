@@ -7,7 +7,7 @@ using System.Net;
 using System.Text;
 using System;
 using System.IO;
-using System.Diagnostics;
+using UnityEngine;
 
 
 public static class ServerLogger
@@ -44,9 +44,42 @@ public static class ServerLogger
 }
 
 public static class Logger{
+    public static Thread FileWriteThread = new Thread(ThreadedWrite);
+    public static bool Stop = false;
+
+    public static ConcurrentQueue<string> ToWrite = new ConcurrentQueue<string>();
+
     public static void Log(string LogMessage){
         if (NetworkSettings.LOG_PATH != null){
-            File.AppendAllText(NetworkSettings.LOG_PATH, DateTime.Now.ToString("[hh:mm:ss] ") + LogMessage + "\n");
+            ToWrite.Enqueue(DateTime.Now.ToString("[hh:mm:ss] ") + LogMessage + "\n");
+            
+            if (FileWriteThread.ThreadState != ThreadState.Running & FileWriteThread.ThreadState != ThreadState.WaitSleepJoin){
+                try{
+                    FileWriteThread.Start();
+                }
+                catch (ThreadStateException){}
+            }
+        }
+    }
+
+    public static void ThreadedWrite(){
+        while (!Stop){
+            while (ToWrite.Count > 0){
+                string toWriteString;
+                if (ToWrite.TryDequeue(out toWriteString)){
+                    File.AppendAllText(NetworkSettings.LOG_PATH ,toWriteString);
+                }
+            }
+            Thread.Sleep(50);
+        }
+    }
+
+    public static void WriteAllRemaining(){
+        while (ToWrite.Count > 0){
+            string toWriteString;
+            if (ToWrite.TryDequeue(out toWriteString)){
+                File.AppendAllText(NetworkSettings.LOG_PATH ,toWriteString);
+            }
         }
     }
 }

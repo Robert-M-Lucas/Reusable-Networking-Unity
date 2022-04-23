@@ -48,7 +48,7 @@ public class test : MonoBehaviour
     void OnApplicationQuit(){
         Handler.Shutdown(SocketShutdown.Both);
         Debug.Log("Stopping");
-        Server.getInstance().Stop();
+        NetworkController.Shutdown();
     }
 
     // Update is called once per frame

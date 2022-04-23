@@ -101,4 +101,4 @@ public class {packet_name}Packet {{
     with open(f"{path}\\{filename}", "w+") as f:
         f.write(data)
 
-print(f"Time taken: {(time.time()-start_time)*1000}ms")
+print(f"Time taken: {round((time.time()-start_time)*1000, 5)}ms")

@@ -1,13 +1,22 @@
+0 - 100: Default Packets
+
 Initial client connection request
 0\ClientConnectRequest\Name\string\Version\string
+
 Server accepting client's connection
 1\ServerConnectAccept\GivenUID\int
+
 2\ServerKick\Reason\string
+
 Server telling a client about other connected clients
 3\ServerOtherClientInfo\ClientUID\int\ClientName\string
+
 Ping packet
 4\Ping\PingPacketID\int\SendTimeStamp\int
 
-Theses are random test packets
+*****************************************
+
+100 - 199: Theses are random test packets
+
 100\RandomCustomClient\a\int\b\string
 101\AnotherTest\attributeone\int\attributetwo\string\attributethree\double

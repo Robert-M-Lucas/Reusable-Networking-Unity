@@ -12,6 +12,8 @@ public class SPNetworkManager : MonoBehaviour
     public Transform myPlayer;
     public Transform foreignPlayer;
 
+    int p;
+
     public float LastSent;
 
     SPClientPacketHandler handler;
@@ -21,8 +23,20 @@ public class SPNetworkManager : MonoBehaviour
 
         // Required
         NetworkSettings.MainThreadStart();
+    }
 
-        # if UNITY_EDITOR
+    
+    void Start()
+    {  
+        
+    }
+
+    void OnApplicationQuit(){
+        // Required
+        NetworkController.Shutdown();
+    }
+
+    public void StartServer(){
         // True in getInstance() denotes that you are expecting an instance to be created
         Server.getInstance(true).AcceptingClients = true;
         // Omit this line for no password
@@ -39,9 +53,9 @@ public class SPNetworkManager : MonoBehaviour
 
         // Start the server
         Server.getInstance().Start();
-        # endif
+    }
 
-
+    public void StartClient(int other_player){
         // Adding actions that get called when a log is updated
         Client.getInstance(true).ConnectUpdateAction = () => {Debug.Log(Client.getInstance().ConnectThreadInfo);};
         Client.getInstance().ClientInfoUpdateAction = () => {Debug.Log(Client.getInstance().ClientInfo);};
@@ -54,30 +68,19 @@ public class SPNetworkManager : MonoBehaviour
 
         // Connect and start the client
         Client.getInstance().Connect("127.0.0.1");
-    }
-
-    
-    void Start()
-    {  
+        p = other_player;
         handler.PlayerPos[0] = new Tuple<double, double, double>(0, 0, 0);
         handler.PlayerPos[1] = new Tuple<double, double, double>(0, 0, 0);
 
         LastSent = Time.time;
     }
 
-    void OnApplicationQuit(){
-        // Required
-        NetworkController.Shutdown();
-    }
-
     // Update is called once per frame
     void Update()
     {
-        # if UNITY_EDITOR
-        int p = 1;
-        # else
-        int p = 0;
-        # endif
+        if (!Client.has_instance){
+            return;
+        }
 
         foreignPlayer.transform.position = new Vector3((float) handler.PlayerPos[p].Item1, (float) handler.PlayerPos[p].Item2, (float) handler.PlayerPos[p].Item3);
 

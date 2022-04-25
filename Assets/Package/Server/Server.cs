@@ -200,7 +200,7 @@ public class Server : ServerClientParent
                 // Version mismatch
                 if (initPacket.Version != NetworkSettings.VERSION){
                     Handler.Send(ServerKickPacket.Build(0, "Wrong Version:\nServer: " + NetworkSettings.VERSION.ToString() + "   Client (You): " + initPacket.Version));
-                    ServerLogger.AC("SERVER: Client kicked - wrong version");
+                    ServerLogger.AC("SERVER: Client kicked - Wrong Version - Server: " + NetworkSettings.VERSION.ToString() + " Client: " + initPacket.Version);
                     continue;
                 } 
 

@@ -15,6 +15,7 @@ public class SPNetworkManager : MonoBehaviour
     int p;
 
     public float LastSent;
+    public float LastSentPing;
 
     SPClientPacketHandler handler;
 
@@ -62,12 +63,16 @@ public class SPNetworkManager : MonoBehaviour
         // Client.getInstance().RecieveUpdateAction = () => {Debug.Log(Client.getInstance().RecieveThreadInfo);};
         // Client.getInstance().SendUpdateAction = () => {Debug.Log(Client.getInstance().SendThreadInfo);};
 
+        Client.getInstance().OnPlayerUpdateAction = () => {
+            foreach (ClientPlayer player in Client.getInstance().Players.Values) { Debug.Log("Client name:'" + player.Name + "', ID: " + player.ID); }
+        };
+
         // Add packet handler to packet handler hierachy
         handler = new SPClientPacketHandler();
         Client.getInstance().hierachy.Hierachy.Add(handler);
 
         // Connect and start the client
-        Client.getInstance().Connect("127.0.0.1");
+        Client.getInstance().Connect("127.0.0.1", "", "ClientName-"+Mathf.Abs(other_player-1));
         p = other_player;
         handler.PlayerPos[0] = new Tuple<double, double, double>(0, 0, 0);
         handler.PlayerPos[1] = new Tuple<double, double, double>(0, 0, 0);
@@ -106,10 +111,14 @@ public class SPNetworkManager : MonoBehaviour
         if (Time.time - LastSent > ((float) 1/60)){
             LastSent = Time.time;
             Client.getInstance().SendMessage(PositionUpdateClientPacket.Build(0, myPlayer.position.x, myPlayer.position.y, myPlayer.position.z), false);
+        }
+        if (Time.time- LastSentPing > 1){
+            LastSentPing = Time.time;
             try{
                 Client.getInstance().GetPing((int p) => {Debug.Log("Ping: " + p); });
             }
             catch (WaitingForPingResponseException){}
+            catch (ClientNotConnectedException) {}
         }
     }
 }

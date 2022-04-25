@@ -20,6 +20,7 @@ See ```SampleNetworkManager.cs```, ```SampleServerPacketHandler.cs``` and ```Sam
 
 #### Misc Setup
 - Change constants in ```NetworkSettings.cs```
+- Add extra data to ```ServerPlayer``` and ```ClientPlayer``` objects with ```Server\ServerPlayerExtraData.cs``` and ```Client\ClientPlayerExtraData.cs``` respectively
 
 ### Usage
 - Server and Client objects are both Singletons. Use ```Server.getInstance()``` and ```Client.getInstance()``` respectively to get a reference. To instantiate these objects use ```.getInstance(true)```

@@ -11,8 +11,6 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
 
-
-
 public class Server : ServerClientParent
 {
     public string server_password = "";
@@ -38,7 +36,10 @@ public class Server : ServerClientParent
     public Action SendUpdateAction = () => { };
     # endregion
 
-    public List<ServerPlayer> Players = new List<ServerPlayer>();
+    public Action OnPlayerJoinAction = () => {};
+    public Action OnPlayerLeaveAction = () => {};
+
+    public Dictionary<int, ServerPlayer> Players = new Dictionary<int, ServerPlayer>();
 
     public int UsersConnected {get {return Players.Count;}}
 
@@ -89,18 +90,41 @@ public class Server : ServerClientParent
     }
 
     public ServerPlayer GetPlayer(int playerID){
-        foreach (ServerPlayer player in Players){
-            if (player.ID == playerID){
-                return player;
-            }
+        if (Players.ContainsKey(playerID)){
+            return Players[playerID];
         }
         return null;
     }
 
     ServerPlayer AddPlayer(Socket handler){
-        Players.Add(new ServerPlayer(handler, playerIDCounter));
+        Players.Add(playerIDCounter, new ServerPlayer(handler, playerIDCounter));
         playerIDCounter++;
-        return Players[Players.Count-1];
+        new Thread(() => OnPlayerJoinAction()).Start();;
+        return Players[playerIDCounter-1];
+    }
+
+    void RemovePlayer(int playerID){
+        Players.Remove(playerID);
+
+        foreach (int otherPlayerID in Players.Keys){
+            SendMessage(playerID, ServerClientDisconnectPacket.Build(0, playerID), false);
+        }
+
+        new Thread(() => OnPlayerLeaveAction()).Start();;
+    }
+
+    public void UpdateAllPlayersAboutPlayer(ServerPlayer playerAbout){
+        foreach (int playerID in Players.Keys){
+            if (playerID == playerAbout.ID){ continue; }
+            SendMessage(playerID, ServerOtherClientInfoPacket.Build(0, playerAbout.ID, playerAbout.Name), false);
+        }
+    }
+    public void UpdatePlayerAboutAllPlayers(ServerPlayer playerUpdated){
+        foreach (int playerID in Players.Keys){
+            if (playerID == playerUpdated.ID){ continue; }
+            ServerPlayer player = Players[playerID];
+            SendMessage(playerUpdated.ID, ServerOtherClientInfoPacket.Build(0, player.ID, player.Name), false);
+        }
     }
 
     // Accept client
@@ -190,6 +214,9 @@ public class Server : ServerClientParent
                 
                 SendMessage(player.ID, ServerConnectAcceptPacket.Build(0, player.ID), false);
 
+                UpdateAllPlayersAboutPlayer(player);
+                UpdatePlayerAboutAllPlayers(player);
+
                 ServerLogger.AC("Player " + player.GetUniqueString() + " connected. Beginning recieve");
 
                 Handler.BeginReceive(player.buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), player);
@@ -221,8 +248,14 @@ public class Server : ServerClientParent
                 if (!SendQueue.IsEmpty){
                     Tuple<int, byte[]> to_send;
                     if (SendQueue.TryDequeue(out to_send)){
-                        ServerLogger.S("To " + GetPlayer(to_send.Item1).GetUniqueString() + "; Sent packet");
-                        GetPlayer(to_send.Item1).Handler.Send(to_send.Item2);
+                        ServerLogger.S("To " +Players[to_send.Item1].GetUniqueString() + "; Sent packet");
+                        try {
+                            Players[to_send.Item1].Handler.Send(to_send.Item2);
+                        }
+                        catch (SocketException se){
+                            ServerLogger.S("Client: " + Players[to_send.Item1].GetUniqueString() + " disconnected due to socket exception: " + se);
+                            Players.Remove(to_send.Item1);
+                        }
                     }
                 }
                 else if (!RequiredResponseQueue.IsEmpty){
@@ -230,8 +263,8 @@ public class Server : ServerClientParent
                     if (RequiredResponseQueue.TryDequeue(out rid)){
                         if (RequireResponse.ContainsKey(rid)){
                             Tuple<int, byte[]> to_send = RequireResponse[rid];
-                            ServerLogger.S("To " + GetPlayer(to_send.Item1).GetUniqueString() + "; Sent RID packet");
-                            GetPlayer(to_send.Item1).Handler.Send(to_send.Item2);
+                            ServerLogger.S("To " + Players[to_send.Item1].GetUniqueString() + "; Sent RID packet");
+                            Players[to_send.Item1].Handler.Send(to_send.Item2);
                             RequiredResponseQueue.Enqueue(rid);
                         }
                     }
@@ -337,7 +370,7 @@ public class Server : ServerClientParent
         try{AcceptClientThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{RecieveThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
-        foreach (ServerPlayer player in Players){
+        foreach (ServerPlayer player in Players.Values){
             try{player.Handler.Send(ServerKickPacket.Build(0, "Server shutting down"));}catch (Exception e){Debug.Log(e);}
             try{player.Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         }

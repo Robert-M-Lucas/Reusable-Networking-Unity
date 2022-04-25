@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 public class DefaultClientPacketHandler : PacketHandlerParent
 {
     public override Dictionary<int, Action<Packet>> UIDtoAction {get;} = new Dictionary<int, Action<Packet>> {
         {1, (Packet p) => ServerAccept(p)},
         {2, (Packet p) => ServerKick(p)},
+        {3, (Packet p) => PlayerInformationUpdate(p)},
+        {6, (Packet p) => PlayerDisconnect(p)},
         {5, (Packet p) => PingResponse(p)},
     };
 
@@ -19,6 +22,17 @@ public class DefaultClientPacketHandler : PacketHandlerParent
         ServerKickPacket kickPacket = new ServerKickPacket(packet);
         ClientLogger.ClientLog("Server kicked client, reason: " + kickPacket.Reason);
         Client.getInstance().Disconnect();
+    }
+
+    public static void PlayerInformationUpdate(Packet packet){
+        ServerOtherClientInfoPacket infoPacket = new ServerOtherClientInfoPacket(packet);
+        Client.getInstance().AddOrUpdatePlayer(infoPacket.ClientUID, infoPacket.ClientName);
+        new Thread(() => Client.getInstance().OnPlayerUpdateAction()).Start();
+    }
+
+    public static void PlayerDisconnect(Packet packet){
+        ServerClientDisconnectPacket disconnectPacket = new ServerClientDisconnectPacket(packet);
+        Client.getInstance().RemovePlayer(disconnectPacket.ClientUID);
     }
 
     public static void PingResponse(Packet p){

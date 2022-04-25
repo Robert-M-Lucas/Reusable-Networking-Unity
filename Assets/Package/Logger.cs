@@ -18,7 +18,7 @@ public static class ServerLogger
     public static void ServerLog(string message){
         try{
             Server.getInstance().ServerInfo = ServerWrap(message);
-            Server.getInstance().ServerInfoUpdateAction();
+            new Thread(() => Server.getInstance().ServerInfoUpdateAction()).Start();
         }
         catch (NullReferenceException){}
         Logger.Log(ServerWrap(message));
@@ -27,7 +27,7 @@ public static class ServerLogger
     public static void AC (string message){
         message = "[AC] " + message;
         Server.getInstance().AcceptClientThreadInfo = ServerWrap(message);
-        Server.getInstance().AcceptClientUpdateAction();
+        new Thread(() => Server.getInstance().AcceptClientUpdateAction()).Start();
         Logger.Log(message);
     }
 
@@ -35,7 +35,7 @@ public static class ServerLogger
     public static void R (string message){
         message = "[R] " + message;
         Server.getInstance().RecieveThreadInfo = ServerWrap(message);
-        Server.getInstance().RecieveUpdateAction();
+        new Thread(() => Server.getInstance().RecieveUpdateAction()).Start();
         Logger.Log(message);
     }
 
@@ -43,7 +43,7 @@ public static class ServerLogger
     public static void S (string message){
         message = "[S] " + message;
         Server.getInstance().SendThreadInfo = ServerWrap(message);
-        Server.getInstance().SendUpdateAction();
+        new Thread(() => Server.getInstance().SendUpdateAction()).Start();
         Logger.Log(message);
     }
 }
@@ -56,7 +56,7 @@ public static class ClientLogger
     public static void ClientLog(string message){
         try{
         Client.getInstance().ClientInfo = ClientWrap(message);
-        Client.getInstance().ClientInfoUpdateAction();
+        new Thread(() => Client.getInstance().ClientInfoUpdateAction()).Start();
         }
         catch (NullReferenceException){}
         Logger.Log(ClientWrap(message));
@@ -65,14 +65,14 @@ public static class ClientLogger
     public static void C (string message){
         message = "[C] " + message;
         Client.getInstance().ConnectThreadInfo = ClientWrap(message);
-        Client.getInstance().ConnectUpdateAction();
+        new Thread(() => Client.getInstance().ConnectUpdateAction()).Start();
         Logger.Log(message);
     }
     // Recieve Thread
     public static void R (string message){
         message = "[R] " + message;
         Client.getInstance().RecieveThreadInfo = ClientWrap(message);
-        Client.getInstance().RecieveUpdateAction();
+        new Thread(() => Client.getInstance().RecieveUpdateAction()).Start();
         Logger.Log(message);
     }
 
@@ -80,7 +80,7 @@ public static class ClientLogger
     public static void S (string message){
         message = "[S] " + message;
         Client.getInstance().SendThreadInfo = ClientWrap(message);
-        Client.getInstance().SendUpdateAction();
+        new Thread(() => Client.getInstance().SendUpdateAction()).Start();
         Logger.Log(message);
     }
 }

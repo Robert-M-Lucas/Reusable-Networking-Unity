@@ -25,6 +25,7 @@ public class Client : ServerClientParent
 
     # endregion
 
+    # region ThreadsAndInfo
     public string ClientInfo = "";
     public Action ClientInfoUpdateAction = () => { };
     bool connected = false;
@@ -38,7 +39,12 @@ public class Client : ServerClientParent
     public string SendThreadInfo = "";
     public Action SendUpdateAction = () => { };
 
+    #endregion
+
     public Action DisconnectAction = () => { };
+
+    public Action OnPlayerUpdateAction = () => { };
+    public Action OnPlayerDisconnectAction = () => { };
 
     public ServerClientHierachy hierachy;
 
@@ -52,6 +58,8 @@ public class Client : ServerClientParent
 
     public Action<int> PingResponseAction;
     public Stopwatch PingTimer = new Stopwatch();
+
+    public Dictionary<int, ClientPlayer> Players = new Dictionary<int, ClientPlayer>();
 
     private Client() 
     {
@@ -82,17 +90,34 @@ public class Client : ServerClientParent
         PingTimer.Start();
     }
 
+    public void AddOrUpdatePlayer(int ClientID, string ClientName){
+        if (!Players.ContainsKey(ClientID)){
+            Players.Add(ClientID, new ClientPlayer(ClientID, ClientName));
+        }
+        else{
+            Players[ClientID].Name = ClientName;
+        }
+        new Thread(() => OnPlayerUpdateAction()).Start();
+    }
+
+    public void RemovePlayer(int ClientID){
+        if (Players.ContainsKey(ClientID)){
+            Players.Remove(ClientID);
+            new Thread(() => OnPlayerDisconnectAction()).Start();
+        }
+    }
+
     private void Start(){
         ClientLogger.ClientLog("Starting client");
     }
 
-    public void Connect(string IP, string Password=""){
+    public void Connect(string IP, string Password="", string Name = ""){
         ClientLogger.C("Starting connection thread");
-        ConnectThread = new Thread(() => {ConnectThreaded(IP, Password);});
+        ConnectThread = new Thread(() => {ConnectThreaded(IP, Password, Name);});
         ConnectThread.Start();
     }
 
-    void ConnectThreaded(string IP, string Password=""){
+    void ConnectThreaded(string IP, string Password="", string Name = ""){
         ClientLogger.C("Starting connection");
 
         IPAddress HostIpA = IPAddress.Parse(IP);
@@ -106,7 +131,7 @@ public class Client : ServerClientParent
         ClientLogger.C("Socket connected to " +
             Handler.RemoteEndPoint.ToString());
   
-        Handler.Send(ClientConnectRequestPacket.Build(0, "Me", NetworkSettings.VERSION, Password));
+        Handler.Send(ClientConnectRequestPacket.Build(0, Name, NetworkSettings.VERSION, Password));
 
         Handler.BeginReceive(server_buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), null);
 

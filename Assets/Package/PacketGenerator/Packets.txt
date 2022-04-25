@@ -9,7 +9,8 @@ Server accepting client's connection
 2\ServerKick\Reason\string
 
 Server telling a client about other connected clients
-3\ServerOtherClientInfo\ClientUID\int\ClientName\string
+3\ServerOtherClientInfo\ClientUID\int\ClientName=""\string
+6\ServerClientDisconnect\ClientUID\int
 
 Ping packet
 4\ClientPing

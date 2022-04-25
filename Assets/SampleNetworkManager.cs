@@ -28,6 +28,13 @@ public class SampleNetworkManager : MonoBehaviour
         // Server.getInstance().RecieveUpdateAction = () => {Debug.Log(Server.getInstance().RecieveThreadInfo);};
         // Server.getInstance().SendUpdateAction = () => {Debug.Log(Server.getInstance().SendThreadInfo);};
 
+        // On player join
+        Server.getInstance().OnPlayerJoinAction = () => {
+            // Code here
+        };
+        // On player disconnect
+        Server.getInstance().OnPlayerLeaveAction = () => {};
+
         // Add packet handler to packet handler hierachy
         Server.getInstance().hierachy.Hierachy.Add(new SampleServerPacketHandler());
 
@@ -40,6 +47,15 @@ public class SampleNetworkManager : MonoBehaviour
         Client.getInstance().ClientInfoUpdateAction = () => {Debug.Log(Client.getInstance().ClientInfo);};
         // Client.getInstance().RecieveUpdateAction = () => {Debug.Log(Client.getInstance().RecieveThreadInfo);};
         // Client.getInstance().SendUpdateAction = () => {Debug.Log(Client.getInstance().SendThreadInfo);};
+
+        // Client action on player join or update
+        Client.getInstance().OnPlayerUpdateAction = () => {
+            foreach (ClientPlayer player in Client.getInstance().Players.Values) { Debug.Log("Client name:'" + player.Name + "', ID: " + player.ID); }
+        };
+        // Client on player disconnect
+        Client.getInstance().OnPlayerDisconnectAction = () => {
+            // Code here
+        };
 
         // Add packet handler to packet handler hierachy
         Client.getInstance().hierachy.Hierachy.Add(new SampleClientPacketHandler());

@@ -10,6 +10,8 @@ using System;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
+public class ClientNotConnectedException: Exception {}
+public class WaitingForPingResponseException: Exception {};
 
 public class Client : ServerClientParent
 {
@@ -48,6 +50,9 @@ public class Client : ServerClientParent
     int RID = 1;
     CircularArray<int> RecievedRIDs = new CircularArray<int>(50);
 
+    public Action<int> PingResponseAction;
+    public Stopwatch PingTimer = new Stopwatch();
+
     private Client() 
     {
         hierachy = new ServerClientHierachy(this);
@@ -66,6 +71,15 @@ public class Client : ServerClientParent
         }
 
         return instance;
+    }
+
+    public void GetPing(Action<int> callback){
+        if (!connected) { throw new ClientNotConnectedException(); }
+        if (PingTimer.IsRunning) { throw new WaitingForPingResponseException(); }
+
+        PingResponseAction = callback;
+        SendMessage(ClientPingPacket.Build(0), false);
+        PingTimer.Start();
     }
 
     private void Start(){
@@ -137,7 +151,7 @@ public class Client : ServerClientParent
                     }
                 }
 
-                Thread.Sleep(5);
+                Thread.Sleep(2);
             }
         }
         catch (ThreadAbortException) {}

@@ -106,6 +106,10 @@ public class SPNetworkManager : MonoBehaviour
         if (Time.time - LastSent > ((float) 1/60)){
             LastSent = Time.time;
             Client.getInstance().SendMessage(PositionUpdateClientPacket.Build(0, myPlayer.position.x, myPlayer.position.y, myPlayer.position.z), false);
+            try{
+                Client.getInstance().GetPing((int p) => {Debug.Log("Ping: " + p); });
+            }
+            catch (WaitingForPingResponseException){}
         }
     }
 }

@@ -12,7 +12,8 @@ Server telling a client about other connected clients
 3\ServerOtherClientInfo\ClientUID\int\ClientName\string
 
 Ping packet
-4\Ping\PingPacketID\int\SendTimeStamp\int
+4\ClientPing
+5\ServerPing
 
 *****************************************
 

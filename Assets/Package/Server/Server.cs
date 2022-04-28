@@ -106,7 +106,7 @@ public class Server : ServerClientParent
         return Players[playerIDCounter-1];
     }
 
-    void RemovePlayer(int playerID){
+    public void RemovePlayer(int playerID){
         Players.Remove(playerID);
 
         foreach (int otherPlayerID in Players.Keys){

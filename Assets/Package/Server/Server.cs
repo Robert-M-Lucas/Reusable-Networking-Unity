@@ -78,8 +78,10 @@ public class Server : ServerClientParent
         return instance;
     }
 
-    public void Start(string _password = ""){
-        password = _password;
+    public void Start(string _password = null){
+        if (_password != null) {
+            password = _password;
+        }
         ServerLogger.ServerLog("Starting server");
         AcceptClientThread = new Thread(AcceptClients);
         AcceptClientThread.Start();

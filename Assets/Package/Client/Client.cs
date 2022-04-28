@@ -143,7 +143,7 @@ public class Client : ServerClientParent
         SendThread.Start();
     }
 
-    public void SendMessage(byte[] message, bool require_response){
+    public void SendMessage(byte[] message, bool require_response = false){
         SendQueue.Enqueue(message);
 
         if (require_response){

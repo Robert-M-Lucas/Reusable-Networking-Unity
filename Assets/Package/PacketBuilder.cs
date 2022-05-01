@@ -4,8 +4,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 
+/*
 public class PacketDictionary: Dictionary<string, string>{
     
+}
+*/
+
+public class PacketDecodeError: Exception {
+    public PacketDecodeError()
+    {
+    }
+
+    public PacketDecodeError(string message)
+        : base(message)
+    {
+    }
+
+    public PacketDecodeError(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
 }
 
 public struct Packet{
@@ -62,24 +80,29 @@ public static class PacketBuilder
 
     public static byte[] Build(int UID, List<byte[]> contents, int RID = 0)
     {
-        byte[] buffer = new byte[1024];
-        int cursor = PacketLenLen;
-        ArrayExtentions.Merge(buffer, BitConverter.GetBytes(UID), cursor);
-        cursor += UIDLen;
-        ArrayExtentions.Merge(buffer, BitConverter.GetBytes(RID), cursor);
-        cursor += RIDLen;
+        try{
+            byte[] buffer = new byte[1024];
+            int cursor = PacketLenLen;
+            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(UID), cursor);
+            cursor += UIDLen;
+            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(RID), cursor);
+            cursor += RIDLen;
 
-        foreach (byte[] c in contents){
-            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(c.Length), cursor);
-            cursor += 4;
-            ArrayExtentions.Merge(buffer, c, cursor);
-            cursor += c.Length;
+            foreach (byte[] c in contents){
+                ArrayExtentions.Merge(buffer, BitConverter.GetBytes(c.Length), cursor);
+                cursor += 4;
+                ArrayExtentions.Merge(buffer, c, cursor);
+                cursor += c.Length;
+            }
+
+            // Add packet length
+            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(cursor-4), 0);
+
+            return ArrayExtentions.Slice(buffer, 0, cursor);
         }
-
-        // Add packet length
-        ArrayExtentions.Merge(buffer, BitConverter.GetBytes(cursor-4), 0);
-
-        return ArrayExtentions.Slice(buffer, 0, cursor);
+        catch (Exception e) {
+            throw new PacketDecodeError("Error decoding packet: " + e);
+        }
     }
 
     public static byte[] ByteEncode(string input){

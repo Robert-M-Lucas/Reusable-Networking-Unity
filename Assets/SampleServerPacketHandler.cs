@@ -8,7 +8,16 @@ public class SampleServerPacketHandler : PacketHandlerParent
         {100, (Packet p) => HandlePacketWithUIDOneHundred(p)} // {UID, Function}
     };
 
+    public SampleServerPacketHandler(){
+        UIDtoAction.Add(100, (Packet p) => HandlePacketWithUIDThreeHundred(p));
+    }
+
     public static void HandlePacketWithUIDOneHundred(Packet packet) {
+        SampleTestPacket sampleTestPacket = new SampleTestPacket(packet); // This packet is defined in Packets.txt
+        ServerLogger.ServerLog(sampleTestPacket.ArgFour);
+    }
+
+    public void HandlePacketWithUIDThreeHundred(Packet packet) {
         SampleTestPacket sampleTestPacket = new SampleTestPacket(packet); // This packet is defined in Packets.txt
         ServerLogger.ServerLog(sampleTestPacket.ArgFour);
     }

@@ -15,7 +15,7 @@ public class Server : ServerClientParent
 {
     public string server_password = "";
 
-    public static bool IsRunning = false;
+    public static bool is_running {private set; get;} = false;
     // public bool stopping = false;
 
     private Socket Handler;
@@ -86,7 +86,7 @@ public class Server : ServerClientParent
         RecieveThread.Start();
         SendThread = new Thread(SendLoop);
         SendThread.Start();
-        IsRunning = true;
+        is_running = true;
     }
 
     public ServerPlayer GetPlayer(int playerID){
@@ -104,6 +104,7 @@ public class Server : ServerClientParent
     }
 
     void RemovePlayer(int playerID){
+        // TODO: Figure out a way to send a kick packet to a player despite them being disconnected immediately
         Players.Remove(playerID);
 
         foreach (int otherPlayerID in Players.Keys){
@@ -134,7 +135,7 @@ public class Server : ServerClientParent
 
         IPAddress ipAddress = IPAddress.Any;
 
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 8108);
+        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, NetworkSettings.PORT);
 
         try
         {
@@ -231,7 +232,7 @@ public class Server : ServerClientParent
     }
 
     
-    public void SendMessage(int ID, byte[] message, bool require_response){
+    public void SendMessage(int ID, byte[] message, bool require_response = false){
         SendQueue.Enqueue(new Tuple<int, byte[]>(ID, message));
 
         if (require_response){
@@ -346,10 +347,18 @@ public class Server : ServerClientParent
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
                 ServerLogger.R("Handling Packet");
-                bool handled = hierachy.HandlePacket(content.Item2, content.Item1);
-                if (!handled){
+                try {
+                    bool handled = hierachy.HandlePacket(content.Item2, content.Item1);
+
+                    if (!handled){
                     ServerLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content.Item2).UID + ". Probable hierachy error");
                 }
+                }
+                catch (PacketDecodeError e){
+                    ServerLogger.R("[ERROR] " + "Error handling packet from " + Players[content.Item1].GetUniqueString() + "; Error: " + e.ToString());
+                    // TODO: Disconnect client
+                }
+                
 
             }
         }
@@ -375,6 +384,7 @@ public class Server : ServerClientParent
             try{player.Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         }
         instance = null;
+        is_running = false;
         ServerLogger.ServerLog("Server Shut Down Complete");
     }
 }

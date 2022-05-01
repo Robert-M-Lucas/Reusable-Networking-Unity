@@ -28,7 +28,7 @@ public class Client : ServerClientParent
     # region ThreadsAndInfo
     public string ClientInfo = "";
     public Action ClientInfoUpdateAction = () => { };
-    bool connected = false;
+    public bool connected {private set; get;} = false;
     public Thread ConnectThread;
     public string ConnectThreadInfo = "";
     public Action ConnectUpdateAction = () => { };
@@ -121,7 +121,7 @@ public class Client : ServerClientParent
         ClientLogger.C("Starting connection");
 
         IPAddress HostIpA = IPAddress.Parse(IP);
-        IPEndPoint RemoteEP = new IPEndPoint(HostIpA, 8108);
+        IPEndPoint RemoteEP = new IPEndPoint(HostIpA, NetworkSettings.PORT);
 
         Handler = new Socket(HostIpA.AddressFamily,
             SocketType.Stream, ProtocolType.Tcp);
@@ -249,11 +249,16 @@ public class Client : ServerClientParent
                 if (!ContentQueue.TryDequeue(out content)){ continue; }
 
                 ClientLogger.R("Handling Packet");
-                bool handled = hierachy.HandlePacket(content);
-                if (!handled){
-                    ClientLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content).UID + ". Probable hierachy error");
+                try{
+                    bool handled = hierachy.HandlePacket(content);
+                    if (!handled){
+                        ClientLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content).UID + ". Probable hierachy error");
+                    }
                 }
-
+                catch (PacketDecodeError e){
+                    ServerLogger.R("[ERROR] " + "Error handling packet from server; Error: " + e.ToString());
+                    // TODO: Disconnect self
+                }
             }
         }
         catch (ThreadAbortException) {}
@@ -282,6 +287,7 @@ public class Client : ServerClientParent
         try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
         try{Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
         instance = null;
+        connected = false;
         ClientLogger.ClientLog("Client Shut Down Complete");
     }
 }

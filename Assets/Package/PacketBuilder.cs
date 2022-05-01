@@ -10,29 +10,24 @@ public class PacketDictionary: Dictionary<string, string>{
 }
 */
 
-public class PacketDecodeError: Exception {
-    public PacketDecodeError()
-    {
-    }
+public class PacketDecodeError : Exception
+{
+    public PacketDecodeError() { }
 
-    public PacketDecodeError(string message)
-        : base(message)
-    {
-    }
+    public PacketDecodeError(string message) : base(message) { }
 
-    public PacketDecodeError(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+    public PacketDecodeError(string message, Exception inner) : base(message, inner) { }
 }
 
-public struct Packet{
+public struct Packet
+{
     public int UID;
     public int RID;
     public int From;
     public List<byte[]> contents;
 
-    public Packet(int _UID, int _RID, List<byte[]> _contents, int from = -1){
+    public Packet(int _UID, int _RID, List<byte[]> _contents, int from = -1)
+    {
         UID = _UID;
         RID = _RID;
         contents = _contents;
@@ -42,19 +37,12 @@ public struct Packet{
 
 public class PacketMissingAttributeException : Exception
 {
-    public PacketMissingAttributeException()
-    {
-    }
+    public PacketMissingAttributeException() { }
 
-    public PacketMissingAttributeException(string message)
-        : base(message)
-    {
-    }
+    public PacketMissingAttributeException(string message) : base(message) { }
 
-    public PacketMissingAttributeException(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+    public PacketMissingAttributeException(string message, Exception inner) : base(message, inner)
+    { }
 }
 
 //UIDLEN 16 bit & RIDLEN 24 bit
@@ -74,13 +62,15 @@ public static class PacketBuilder
     }
     */
 
-    public static int GetPacketLength(byte[] bytes){
+    public static int GetPacketLength(byte[] bytes)
+    {
         return BitConverter.ToInt32(ArrayExtentions.Slice(bytes, 0, PacketLenLen)) + PacketLenLen;
     }
 
     public static byte[] Build(int UID, List<byte[]> contents, int RID = 0)
     {
-        try{
+        try
+        {
             byte[] buffer = new byte[1024];
             int cursor = PacketLenLen;
             ArrayExtentions.Merge(buffer, BitConverter.GetBytes(UID), cursor);
@@ -88,7 +78,8 @@ public static class PacketBuilder
             ArrayExtentions.Merge(buffer, BitConverter.GetBytes(RID), cursor);
             cursor += RIDLen;
 
-            foreach (byte[] c in contents){
+            foreach (byte[] c in contents)
+            {
                 ArrayExtentions.Merge(buffer, BitConverter.GetBytes(c.Length), cursor);
                 cursor += 4;
                 ArrayExtentions.Merge(buffer, c, cursor);
@@ -96,21 +87,23 @@ public static class PacketBuilder
             }
 
             // Add packet length
-            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(cursor-4), 0);
+            ArrayExtentions.Merge(buffer, BitConverter.GetBytes(cursor - 4), 0);
 
             return ArrayExtentions.Slice(buffer, 0, cursor);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             throw new PacketDecodeError("Error decoding packet: " + e);
         }
     }
 
-    public static byte[] ByteEncode(string input){
+    public static byte[] ByteEncode(string input)
+    {
         return encoder.GetBytes(input);
     }
 
-    public static Packet Decode(byte[] data, int from = -1) {
-
+    public static Packet Decode(byte[] data, int from = -1)
+    {
         int cursor = 4;
         int UID = BitConverter.ToInt32(ArrayExtentions.Slice(data, cursor, cursor + UIDLen));
         cursor += UIDLen;
@@ -118,9 +111,14 @@ public static class PacketBuilder
         cursor += RIDLen;
 
         List<byte[]> contents = new List<byte[]>();
-        while (cursor < data.Length){
-            int data_len = BitConverter.ToInt32(ArrayExtentions.Slice(data, cursor, cursor + DataLenLen));
-            data_len = BitConverter.ToInt32(ArrayExtentions.Slice(data, cursor, cursor + DataLenLen));
+        while (cursor < data.Length)
+        {
+            int data_len = BitConverter.ToInt32(
+                ArrayExtentions.Slice(data, cursor, cursor + DataLenLen)
+            );
+            data_len = BitConverter.ToInt32(
+                ArrayExtentions.Slice(data, cursor, cursor + DataLenLen)
+            );
             cursor += DataLenLen;
             byte[] content = ArrayExtentions.Slice(data, cursor, cursor + data_len);
             cursor += data_len;

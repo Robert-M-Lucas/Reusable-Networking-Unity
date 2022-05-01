@@ -10,7 +10,7 @@ Server accepting client's connection
 
 Server telling a client about other connected clients
 3\ServerOtherClientInfo\ClientUID\int\ClientName=""\string
-6\ServerClientDisconnect\ClientUID\int
+6\ServerInformOfClientDisconnect\ClientUID\int
 
 Ping packet
 4\ClientPing

@@ -10,8 +10,9 @@ using System;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
-public class ClientNotConnectedException: Exception {}
-public class WaitingForPingResponseException: Exception {};
+public class ClientNotConnectedException : Exception { }
+
+public class WaitingForPingResponseException : Exception { };
 
 public class Client : ServerClientParent
 {
@@ -28,7 +29,7 @@ public class Client : ServerClientParent
     # region ThreadsAndInfo
     public string ClientInfo = "";
     public Action ClientInfoUpdateAction = () => { };
-    public bool connected {private set; get;} = false;
+    public bool connected { private set; get; } = false;
     public Thread ConnectThread;
     public string ConnectThreadInfo = "";
     public Action ConnectUpdateAction = () => { };
@@ -61,76 +62,96 @@ public class Client : ServerClientParent
 
     public Dictionary<int, ClientPlayer> Players = new Dictionary<int, ClientPlayer>();
 
-    private Client() 
+    private Client()
     {
         hierachy = new ServerClientHierachy(this);
         DefaultHierachy.Add(new DefaultClientPacketHandler());
     }
 
     private static Client instance = null;
-    public static bool has_instance {
-    get {
-        return !(instance is null);
-    }}
+    public static bool has_instance
+    {
+        get { return !(instance is null); }
+    }
+
     public static Client getInstance(bool instantiate = false)
     {
-        if (instance is null && instantiate){
+        if (instance is null && instantiate)
+        {
             instance = new Client();
         }
 
         return instance;
     }
 
-    public void GetPing(Action<int> callback){
-        if (!connected) { throw new ClientNotConnectedException(); }
-        if (PingTimer.IsRunning) { throw new WaitingForPingResponseException(); }
+    public void GetPing(Action<int> callback)
+    {
+        if (!connected)
+        {
+            throw new ClientNotConnectedException();
+        }
+        if (PingTimer.IsRunning)
+        {
+            throw new WaitingForPingResponseException();
+        }
 
         PingResponseAction = callback;
         SendMessage(ClientPingPacket.Build(0), false);
         PingTimer.Start();
     }
 
-    public void AddOrUpdatePlayer(int ClientID, string ClientName){
-        if (!Players.ContainsKey(ClientID)){
+    public void AddOrUpdatePlayer(int ClientID, string ClientName)
+    {
+        if (!Players.ContainsKey(ClientID))
+        {
             Players.Add(ClientID, new ClientPlayer(ClientID, ClientName));
         }
-        else{
+        else
+        {
             Players[ClientID].Name = ClientName;
         }
         new Thread(() => OnPlayerUpdateAction()).Start();
     }
 
-    public void RemovePlayer(int ClientID){
-        if (Players.ContainsKey(ClientID)){
+    public void RemovePlayer(int ClientID)
+    {
+        if (Players.ContainsKey(ClientID))
+        {
             Players.Remove(ClientID);
             new Thread(() => OnPlayerDisconnectAction()).Start();
         }
     }
 
-    private void Start(){
+    private void Start()
+    {
         ClientLogger.ClientLog("Starting client");
     }
 
-    public void Connect(string IP, string Password="", string Name = ""){
+    public void Connect(string IP, string Password = "", string Name = "")
+    {
         ClientLogger.C("Starting connection thread");
-        ConnectThread = new Thread(() => {ConnectThreaded(IP, Password, Name);});
+        ConnectThread = new Thread(
+            () =>
+            {
+                ConnectThreaded(IP, Password, Name);
+            }
+        );
         ConnectThread.Start();
     }
 
-    void ConnectThreaded(string IP, string Password="", string Name = ""){
+    void ConnectThreaded(string IP, string Password = "", string Name = "")
+    {
         ClientLogger.C("Starting connection");
 
         IPAddress HostIpA = IPAddress.Parse(IP);
         IPEndPoint RemoteEP = new IPEndPoint(HostIpA, NetworkSettings.PORT);
 
-        Handler = new Socket(HostIpA.AddressFamily,
-            SocketType.Stream, ProtocolType.Tcp);
+        Handler = new Socket(HostIpA.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
         Handler.Connect(RemoteEP);
 
-        ClientLogger.C("Socket connected to " +
-            Handler.RemoteEndPoint.ToString());
-  
+        ClientLogger.C("Socket connected to " + Handler.RemoteEndPoint.ToString());
+
         Handler.Send(ClientConnectRequestPacket.Build(0, Name, NetworkSettings.VERSION, Password));
 
         Handler.BeginReceive(server_buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), null);
@@ -143,10 +164,12 @@ public class Client : ServerClientParent
         SendThread.Start();
     }
 
-    public void SendMessage(byte[] message, bool require_response = false){
+    public void SendMessage(byte[] message, bool require_response = false)
+    {
         SendQueue.Enqueue(message);
 
-        if (require_response){
+        if (require_response)
+        {
             RequireResponse[RID] = message;
             RequiredResponseQueue.Enqueue(RID);
             RID++;
@@ -155,19 +178,26 @@ public class Client : ServerClientParent
 
     void SendLoop()
     {
-        try{
-            while (!stopping){
-                if (!SendQueue.IsEmpty){
+        try
+        {
+            while (!stopping)
+            {
+                if (!SendQueue.IsEmpty)
+                {
                     byte[] to_send;
-                    if (SendQueue.TryDequeue(out to_send)){
+                    if (SendQueue.TryDequeue(out to_send))
+                    {
                         ClientLogger.S("To server; Sent packet");
                         Handler.Send(to_send);
                     }
                 }
-                else if (!RequiredResponseQueue.IsEmpty){
+                else if (!RequiredResponseQueue.IsEmpty)
+                {
                     int rid;
-                    if (RequiredResponseQueue.TryDequeue(out rid)){
-                        if (RequireResponse.ContainsKey(rid)){
+                    if (RequiredResponseQueue.TryDequeue(out rid))
+                    {
+                        if (RequireResponse.ContainsKey(rid))
+                        {
                             byte[] to_send = RequireResponse[rid];
                             ClientLogger.S("To server; Sent RID packet");
                             Handler.Send(to_send);
@@ -179,8 +209,9 @@ public class Client : ServerClientParent
                 Thread.Sleep(2);
             }
         }
-        catch (ThreadAbortException) {}
-        catch (Exception e){
+        catch (ThreadAbortException) { }
+        catch (Exception e)
+        {
             Debug.LogError(e);
             ClientLogger.S("[ERROR] " + e.ToString());
         }
@@ -199,93 +230,151 @@ public class Client : ServerClientParent
 
             ReprocessBuffer:
 
-            if (server_current_packet_length == -1 && server_long_buffer_size >= PacketBuilder.PacketLenLen)
+            if (
+                server_current_packet_length == -1
+                && server_long_buffer_size >= PacketBuilder.PacketLenLen
+            )
             {
                 server_current_packet_length = PacketBuilder.GetPacketLength(server_long_buffer);
             }
 
-            if (server_current_packet_length != -1 && server_long_buffer_size >= server_current_packet_length)
+            if (
+                server_current_packet_length != -1
+                && server_long_buffer_size >= server_current_packet_length
+            )
             {
                 ClientLogger.R("Recieved Packet from server");
-                ContentQueue.Enqueue(ArrayExtentions.Slice(server_long_buffer, 0, server_current_packet_length));
+                ContentQueue.Enqueue(
+                    ArrayExtentions.Slice(server_long_buffer, 0, server_current_packet_length)
+                );
                 byte[] new_buffer = new byte[1024];
-                ArrayExtentions.Merge(new_buffer, ArrayExtentions.Slice(server_long_buffer, server_current_packet_length, 1024), 0);
+                ArrayExtentions.Merge(
+                    new_buffer,
+                    ArrayExtentions.Slice(server_long_buffer, server_current_packet_length, 1024),
+                    0
+                );
                 server_long_buffer = new_buffer;
                 server_long_buffer_size -= server_current_packet_length;
                 server_current_packet_length = -1;
-                if (server_long_buffer_size > 0){
+                if (server_long_buffer_size > 0)
+                {
                     goto ReprocessBuffer;
                 }
             }
 
             // ContentQueue.Enqueue(new Tuple<int, byte[]>(server_ID, subcontent));
             // server_Reset(); // Reset buffers
-// 
+            //
             Handler.BeginReceive(server_buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), null); // Listen again
             // }
             // else
             // {
-            //     // Not all data received. Get more.  
+            //     // Not all data received. Get more.
             //     handler.BeginReceive(server_buffer, 0, 1024, 0,
             //     new AsyncCallback(ReadCallback), CurrentPlayer);
             // }
         }
         else
         {
-            Handler.BeginReceive(server_buffer, 0, 1024, 0,
-                new AsyncCallback(ReadCallback), null);
+            Handler.BeginReceive(server_buffer, 0, 1024, 0, new AsyncCallback(ReadCallback), null);
         }
     }
 
     void RecieveLoop()
     {
-        try{
+        try
+        {
             while (!stopping)
             {
-                if (ContentQueue.IsEmpty){//Thread.Sleep(2);
-                continue;} // Nothing recieved
+                if (ContentQueue.IsEmpty)
+                { //Thread.Sleep(2);
+                    continue;
+                } // Nothing recieved
 
                 byte[] content;
-                if (!ContentQueue.TryDequeue(out content)){ continue; }
+                if (!ContentQueue.TryDequeue(out content))
+                {
+                    continue;
+                }
 
                 ClientLogger.R("Handling Packet");
-                try{
+                try
+                {
                     bool handled = hierachy.HandlePacket(content);
-                    if (!handled){
-                        ClientLogger.R("[ERROR] Failed to handle packed with UID " + PacketBuilder.Decode(content).UID + ". Probable hierachy error");
+                    if (!handled)
+                    {
+                        ClientLogger.R(
+                            "[ERROR] Failed to handle packed with UID "
+                                + PacketBuilder.Decode(content).UID
+                                + ". Probable hierachy error"
+                        );
                     }
                 }
-                catch (PacketDecodeError e){
-                    ServerLogger.R("[ERROR] " + "Error handling packet from server; Error: " + e.ToString());
+                catch (PacketDecodeError e)
+                {
+                    ServerLogger.R(
+                        "[ERROR] " + "Error handling packet from server; Error: " + e.ToString()
+                    );
                     // TODO: Disconnect self
                 }
             }
         }
-        catch (ThreadAbortException) {}
-        catch (Exception e){
+        catch (ThreadAbortException) { }
+        catch (Exception e)
+        {
             Debug.LogError(e);
             ClientLogger.R("[ERROR] " + e.ToString());
         }
     }
-    
-    ~Client(){Stop();}
-    public void Disconnect(){
-        try{
+
+    ~Client()
+    {
+        Stop();
+    }
+
+    public void Disconnect()
+    {
+        try
+        {
             DisconnectAction();
         }
-        catch (Exception e){
+        catch (Exception e)
+        {
             Debug.LogError(e);
             ClientLogger.ClientLog("Error while disconnecting: " + e);
         }
         Stop();
     }
-    public void Stop(){
+
+    public void Stop()
+    {
         ClientLogger.ClientLog("Client Shutting Down");
         stopping = true;
         Thread.Sleep(5);
-        try{RecieveThread.Abort();}catch (Exception e){Debug.Log(e);}
-        try{SendThread.Abort();}catch (Exception e){Debug.Log(e);}
-        try{Handler.Shutdown(SocketShutdown.Both);}catch (Exception e){Debug.Log(e);}
+        try
+        {
+            RecieveThread.Abort();
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
+        try
+        {
+            SendThread.Abort();
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
+        try
+        {
+            Handler.Shutdown(SocketShutdown.Both);
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
         instance = null;
         connected = false;
         ClientLogger.ClientLog("Client Shut Down Complete");

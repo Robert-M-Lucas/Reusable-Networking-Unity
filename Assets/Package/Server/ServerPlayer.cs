@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 
-public class ServerPlayer: ServerPlayerExtraData
+public class ServerPlayer : ServerPlayerExtraData
 {
     public Socket Handler;
 
@@ -20,15 +20,19 @@ public class ServerPlayer: ServerPlayerExtraData
     public int long_buffer_size = 0;
     public StringBuilder sb = new StringBuilder();
 
-    public string GetUniqueString(){
+    public string GetUniqueString()
+    {
         return "[" + ID + "] " + "'" + Name + "'";
     }
 
-    public void Reset(){
+    public void Reset()
+    {
         buffer = new byte[1024];
         sb = new StringBuilder();
     }
-    public ServerPlayer(Socket handler, int playerID){
+
+    public ServerPlayer(Socket handler, int playerID)
+    {
         Handler = handler;
         ID = playerID;
     }

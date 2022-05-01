@@ -20,22 +20,28 @@ public class ServerClientHierachy
     public List<Action<ServerPlayer>> OnPlayerJoinActions = new List<Action<ServerPlayer>>();
     public List<PacketHandlerParent> Hierachy = new List<PacketHandlerParent>();
 
-    public ServerClientHierachy(ServerClientParent serverClient){
+    public ServerClientHierachy(ServerClientParent serverClient)
+    {
         ServerClient = serverClient;
     }
 
-    public bool HandlePacket(byte[] data, int from = -1){
+    public bool HandlePacket(byte[] data, int from = -1)
+    {
         Packet packet = PacketBuilder.Decode(data, from);
 
-        foreach (PacketHandlerParent packetHandler in ServerClient.DefaultHierachy){
-            if (packetHandler.UIDtoAction.ContainsKey(packet.UID)){
+        foreach (PacketHandlerParent packetHandler in ServerClient.DefaultHierachy)
+        {
+            if (packetHandler.UIDtoAction.ContainsKey(packet.UID))
+            {
                 packetHandler.UIDtoAction[packet.UID](packet);
                 return true;
             }
         }
 
-        foreach (PacketHandlerParent packetHandler in Hierachy){
-            if (packetHandler.UIDtoAction.ContainsKey(packet.UID)){
+        foreach (PacketHandlerParent packetHandler in Hierachy)
+        {
+            if (packetHandler.UIDtoAction.ContainsKey(packet.UID))
+            {
                 packetHandler.UIDtoAction[packet.UID](packet);
                 return true;
             }

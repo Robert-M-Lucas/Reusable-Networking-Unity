@@ -19,33 +19,38 @@ public class SPNetworkManager : MonoBehaviour
 
     SPClientPacketHandler handler;
 
-    void Awake(){
+    void Awake()
+    {
         DontDestroyOnLoad(this);
 
         // Required
         NetworkSettings.MainThreadStart();
     }
 
-    
-    void Start()
-    {  
-        
-    }
+    void Start() { }
 
-    void OnApplicationQuit(){
+    void OnApplicationQuit()
+    {
         // Required
         NetworkController.Shutdown();
     }
 
-    public void StartServer(){
+    public void StartServer()
+    {
         // True in getInstance() denotes that you are expecting an instance to be created
         Server.getInstance(true).AcceptingClients = true;
         // Omit this line for no password
         // Server.getInstance(true).server_password = "Ham";
 
         // Adding actions that get called when a log is updated
-        Server.getInstance().ServerInfoUpdateAction = () => {Debug.Log(Server.getInstance().ServerInfo);};
-        Server.getInstance().AcceptClientUpdateAction = () => {Debug.Log(Server.getInstance().AcceptClientThreadInfo);};
+        Server.getInstance().ServerInfoUpdateAction = () =>
+        {
+            Debug.Log(Server.getInstance().ServerInfo);
+        };
+        Server.getInstance().AcceptClientUpdateAction = () =>
+        {
+            Debug.Log(Server.getInstance().AcceptClientThreadInfo);
+        };
         // Server.getInstance().RecieveUpdateAction = () => {Debug.Log(Server.getInstance().RecieveThreadInfo);};
         // Server.getInstance().SendUpdateAction = () => {Debug.Log(Server.getInstance().SendThreadInfo);};
 
@@ -56,15 +61,26 @@ public class SPNetworkManager : MonoBehaviour
         Server.getInstance().Start();
     }
 
-    public void StartClient(int other_player){
+    public void StartClient(int other_player)
+    {
         // Adding actions that get called when a log is updated
-        Client.getInstance(true).ConnectUpdateAction = () => {Debug.Log(Client.getInstance().ConnectThreadInfo);};
-        Client.getInstance().ClientInfoUpdateAction = () => {Debug.Log(Client.getInstance().ClientInfo);};
+        Client.getInstance(true).ConnectUpdateAction = () =>
+        {
+            Debug.Log(Client.getInstance().ConnectThreadInfo);
+        };
+        Client.getInstance().ClientInfoUpdateAction = () =>
+        {
+            Debug.Log(Client.getInstance().ClientInfo);
+        };
         // Client.getInstance().RecieveUpdateAction = () => {Debug.Log(Client.getInstance().RecieveThreadInfo);};
         // Client.getInstance().SendUpdateAction = () => {Debug.Log(Client.getInstance().SendThreadInfo);};
 
-        Client.getInstance().OnPlayerUpdateAction = () => {
-            foreach (ClientPlayer player in Client.getInstance().Players.Values) { Debug.Log("Client name:'" + player.Name + "', ID: " + player.ID); }
+        Client.getInstance().OnPlayerUpdateAction = () =>
+        {
+            foreach (ClientPlayer player in Client.getInstance().Players.Values)
+            {
+                Debug.Log("Client name:'" + player.Name + "', ID: " + player.ID);
+            }
         };
 
         // Add packet handler to packet handler hierachy
@@ -72,7 +88,7 @@ public class SPNetworkManager : MonoBehaviour
         Client.getInstance().hierachy.Hierachy.Add(handler);
 
         // Connect and start the client
-        Client.getInstance().Connect("127.0.0.1", "", "ClientName-"+Mathf.Abs(other_player-1));
+        Client.getInstance().Connect("127.0.0.1", "", "ClientName-" + Mathf.Abs(other_player - 1));
         p = other_player;
         handler.PlayerPos[0] = new Tuple<double, double, double>(0, 0, 0);
         handler.PlayerPos[1] = new Tuple<double, double, double>(0, 0, 0);
@@ -83,42 +99,73 @@ public class SPNetworkManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!Client.has_instance){
+        if (!Client.has_instance)
+        {
             return;
         }
 
-        foreignPlayer.transform.position = new Vector3((float) handler.PlayerPos[p].Item1, (float) handler.PlayerPos[p].Item2, (float) handler.PlayerPos[p].Item3);
+        foreignPlayer.transform.position = new Vector3(
+            (float)handler.PlayerPos[p].Item1,
+            (float)handler.PlayerPos[p].Item2,
+            (float)handler.PlayerPos[p].Item3
+        );
 
-        if (Input.GetKey(KeyCode.W)){
+        if (Input.GetKey(KeyCode.W))
+        {
             myPlayer.position += Vector3.forward * Time.deltaTime;
         }
-        if (Input.GetKey(KeyCode.A)){
+        if (Input.GetKey(KeyCode.A))
+        {
             myPlayer.position += Vector3.left * Time.deltaTime;
         }
-        if (Input.GetKey(KeyCode.S)){
+        if (Input.GetKey(KeyCode.S))
+        {
             myPlayer.position += Vector3.back * Time.deltaTime;
         }
-        if (Input.GetKey(KeyCode.D)){
+        if (Input.GetKey(KeyCode.D))
+        {
             myPlayer.position += Vector3.right * Time.deltaTime;
         }
-        if (Input.GetKey(KeyCode.Space)){
+        if (Input.GetKey(KeyCode.Space))
+        {
             myPlayer.position += Vector3.up * Time.deltaTime;
         }
-        if (Input.GetKey(KeyCode.LeftShift)){
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
             myPlayer.position += Vector3.down * Time.deltaTime;
         }
 
-        if (Time.time - LastSent > ((float) 1/60)){
+        if (Time.time - LastSent > ((float)1 / 60))
+        {
             LastSent = Time.time;
-            Client.getInstance().SendMessage(PositionUpdateClientPacket.Build(0, myPlayer.position.x, myPlayer.position.y, myPlayer.position.z), false);
+            Client
+                .getInstance()
+                .SendMessage(
+                    PositionUpdateClientPacket.Build(
+                        0,
+                        myPlayer.position.x,
+                        myPlayer.position.y,
+                        myPlayer.position.z
+                    ),
+                    false
+                );
         }
-        if (Time.time- LastSentPing > 1){
+        if (Time.time - LastSentPing > 1)
+        {
             LastSentPing = Time.time;
-            try{
-                Client.getInstance().GetPing((int p) => {Debug.Log("Ping: " + p); });
+            try
+            {
+                Client
+                    .getInstance()
+                    .GetPing(
+                        (int p) =>
+                        {
+                            Debug.Log("Ping: " + p);
+                        }
+                    );
             }
-            catch (WaitingForPingResponseException){}
-            catch (ClientNotConnectedException) {}
+            catch (WaitingForPingResponseException) { }
+            catch (ClientNotConnectedException) { }
         }
     }
 }

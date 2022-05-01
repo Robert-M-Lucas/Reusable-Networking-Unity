@@ -6,7 +6,4 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 
-public class ServerPlayerExtraData
-{
-    
-}
+public class ServerPlayerExtraData { }
